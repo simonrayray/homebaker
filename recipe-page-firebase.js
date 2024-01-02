@@ -1,4 +1,4 @@
-// Firebase configuration
+// Firebase SDK
 const firebaseConfig = {
     apiKey: "AIzaSyBd37AU1wyrBl8ZWdzski377CLpp6jXtik",
     authDomain: "homebaker-pro.firebaseapp.com",
