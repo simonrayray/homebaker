@@ -1,18 +1,4 @@
-// Firebase SDK
-const firebaseConfig = {
-    apiKey: "AIzaSyBd37AU1wyrBl8ZWdzski377CLpp6jXtik",
-    authDomain: "homebaker-pro.firebaseapp.com",
-    projectId: "homebaker-pro",
-    storageBucket: "homebaker-pro.appspot.com",
-    messagingSenderId: "967759562179",
-    appId: "1:967759562179:web:0edfd7e2a7cf748b072976",
-    measurementId: "G-Y3MT8XGF3K"
-  };
-  
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  
-  // Function to fetch data from Firestore
+// Function to fetch data from Firestore
   async function fetchRecipeData() {
       const recipeId = new URLSearchParams(window.location.search).get('id');
       try {
