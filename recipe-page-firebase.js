@@ -231,6 +231,54 @@ function renderListItems(listElement, items, templateHTML, templateClass) {
     });
 }
 
+function renderIngredientsList(listElement, ingredients, type, totalFlourWeight) {
+    // Clear the list before adding new items
+    listElement.innerHTML = '';
+
+    const filteredIngredients = ingredients.filter(ingredient => ingredient.mapValue.fields.type.stringValue === type);
+
+    // Hide the list wrapper if no ingredients of this type
+    const listWrapper = listElement.parentElement;
+    if (filteredIngredients.length === 0) {
+        listWrapper.style.display = 'none';
+        return;
+    } else {
+        listWrapper.style.display = '';
+    }
+
+    filteredIngredients.forEach(ingredient => {
+        const clone = document.createElement('li');
+        clone.className = listElement.children[0].className; // Assuming the first child is the template
+
+        const name = ingredient.mapValue.fields.name.stringValue;
+        const weight = ingredient.mapValue.fields.weight.doubleValue;
+        const percent = (weight / totalFlourWeight) * 100;
+
+        // Set the text elements
+        clone.querySelector('[recipe="ingredient-name"]').textContent = name;
+        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight} g`;
+        clone.querySelector('[recipe="ingredient-percent"]').textContent = `${percent.toFixed(1)}%`;
+
+        listElement.appendChild(clone);
+    });
+}
+
+function updateIngredientsLists(ingredients) {
+    const totalFlourWeight = ingredients.reduce((total, ingredient) => {
+        return ingredient.mapValue.fields.type.stringValue === "Flour" ? total + ingredient.mapValue.fields.weight.doubleValue : total;
+    }, 0);
+
+    const flourListElement = document.querySelector('[recipe="flour-list"]');
+    const fluidListElement = document.querySelector('[recipe="fluid-list"]');
+    const basicsListElement = document.querySelector('[recipe="basics-list"]');
+    const additionsListElement = document.querySelector('[recipe="additions-list"]');
+
+    renderIngredientsList(flourListElement, ingredients, "Flour", totalFlourWeight);
+    renderIngredientsList(fluidListElement, ingredients, "Fluid", totalFlourWeight);
+    renderIngredientsList(basicsListElement, ingredients, "Starter", totalFlourWeight); // Replace "Starter" with the correct type if needed
+    renderIngredientsList(additionsListElement, ingredients, "Addition", totalFlourWeight);
+}
+
 // Function for updating recipe page data
 function updatePageWithRecipeData(recipeData) {
     // Update simple text fields
@@ -243,9 +291,6 @@ function updatePageWithRecipeData(recipeData) {
 
     // Update image
     updateImageSrc(recipeData);
-
-    // Update format
-    updateFormatElements(recipeData);
 
     // Set total dough weight
     calculateTotalWeight(recipeData);
@@ -265,6 +310,12 @@ function updatePageWithRecipeData(recipeData) {
         const templateClass = templateElement.className;
         renderListItems(stepsListElement, recipeData.steps, templateHTML, templateClass);
     }
+
+    // Update ingredients lists
+    updateIngredientsLists(recipeData.ingredients.arrayValue.values);
+
+    // Update format
+    updateFormatElements(recipeData);
 
     // Hide loader after page is loaded
     hideLoader();
