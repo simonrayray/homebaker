@@ -218,7 +218,7 @@ function renderListItems(listElement, items, templateHTML, templateClass) {
                 // Conditionally update/hide ambient temp
         const ambientTempElement = clone.querySelector('[recipe="ambient-temp"]');
         if (item.ambient_temperature) {
-            ovenTempElement.textContent = item.ambient_temperature;
+            ambientTempElement.textContent = item.ambient_temperature;
         } else {
             // Hide the parent element
             const ambientChipElement = clone.querySelector('[recipe="meta-ambient-chip"]');
