@@ -3,6 +3,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js";
 
+const firebaseConfig = {
+    apiKey: "AIzaSyBd37AU1wyrBl8ZWdzski377CLpp6jXtik",
+    authDomain: "homebaker-pro.firebaseapp.com",
+    projectId: "homebaker-pro",
+    storageBucket: "homebaker-pro.appspot.com",
+    messagingSenderId: "967759562179",
+    appId: "1:967759562179:web:0edfd7e2a7cf748b072976",
+    measurementId: "G-Y3MT8XGF3K"
+   };
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
