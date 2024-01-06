@@ -235,7 +235,8 @@ function renderIngredientsList(listElement, ingredients, type, totalFlourWeight)
     // Clear the list before adding new items
     listElement.innerHTML = '';
 
-    const filteredIngredients = ingredients.filter(ingredient => ingredient.mapValue.fields.type.stringValue === type);
+    const filteredIngredients = ingredients.filter(ingredient => 
+        ingredient.mapValue.fields.type.stringValue === type);
 
     // Hide the list wrapper if no ingredients of this type
     const listWrapper = listElement.parentElement;
@@ -247,12 +248,12 @@ function renderIngredientsList(listElement, ingredients, type, totalFlourWeight)
     }
 
     filteredIngredients.forEach(ingredient => {
-        const clone = document.createElement('li');
-        clone.className = listElement.children[0].className; // Assuming the first child is the template
+        const clone = listElement.children[0].cloneNode(true); // Clone the template
 
-        const name = ingredient.mapValue.fields.name.stringValue;
-        const weight = ingredient.mapValue.fields.weight.doubleValue;
-        const percent = (weight / totalFlourWeight) * 100;
+        const fields = ingredient.mapValue.fields;
+        const name = fields.name.stringValue;
+        const weight = fields.weight.doubleValue;
+        const percent = totalFlourWeight ? (weight / totalFlourWeight) * 100 : 0;
 
         // Set the text elements
         clone.querySelector('[recipe="ingredient-name"]').textContent = name;
@@ -265,7 +266,9 @@ function renderIngredientsList(listElement, ingredients, type, totalFlourWeight)
 
 function updateIngredientsLists(ingredients) {
     const totalFlourWeight = ingredients.reduce((total, ingredient) => {
-        return ingredient.mapValue.fields.type.stringValue === "Flour" ? total + ingredient.mapValue.fields.weight.doubleValue : total;
+        const type = ingredient.mapValue.fields.type.stringValue;
+        const weight = ingredient.mapValue.fields.weight.doubleValue;
+        return type === "Flour" ? total + weight : total;
     }, 0);
 
     const flourListElement = document.querySelector('[recipe="flour-list"]');
@@ -275,7 +278,7 @@ function updateIngredientsLists(ingredients) {
 
     renderIngredientsList(flourListElement, ingredients, "Flour", totalFlourWeight);
     renderIngredientsList(fluidListElement, ingredients, "Fluid", totalFlourWeight);
-    renderIngredientsList(basicsListElement, ingredients, "Starter", totalFlourWeight); // Replace "Starter" with the correct type if needed
+    renderIngredientsList(basicsListElement, ingredients, "Starter", totalFlourWeight); // Adjust if different type
     renderIngredientsList(additionsListElement, ingredients, "Addition", totalFlourWeight);
 }
 
@@ -312,7 +315,7 @@ function updatePageWithRecipeData(recipeData) {
     }
 
     // Update ingredients lists
-    updateIngredientsLists(recipeData.ingredients.arrayValue.values);
+    updateIngredientsLists(recipeData.fields.ingredients.arrayValue.values);
 
     // Update format
     updateFormatElements(recipeData);
