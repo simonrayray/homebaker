@@ -1,3 +1,18 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js";
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Create a ReCaptchaEnterpriseProvider instance using your reCAPTCHA Enterprise
+// site key and pass it to initializeAppCheck().
+const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider("6LfCxUEpAAAAAE3wRJS-dHk7bNKzhxgzD6f0pYUY"),
+    isTokenAutoRefreshEnabled: true // Set to true to allow auto-refresh.
+  });
+
 // Function to fetch data from Firestore
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
