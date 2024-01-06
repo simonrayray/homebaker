@@ -230,15 +230,15 @@ function renderListItems(listElement, items, templateHTML, templateClass) {
         listElement.appendChild(clone);
     });
 }
-
-function renderIngredientsList(listElement, ingredients, type, totalFlourWeight) {
+// Ingredients list
+function renderIngredientsList(listElement, ingredients, types, totalFlourWeight) {
     // Clear the list before adding new items
     listElement.innerHTML = '';
 
     const filteredIngredients = ingredients.filter(ingredient => 
-        ingredient.mapValue.fields.type.stringValue === type);
+        types.includes(ingredient.type));
 
-    // Hide the list wrapper if no ingredients of this type
+    // Hide the list wrapper if no ingredients of these types
     const listWrapper = listElement.parentElement;
     if (filteredIngredients.length === 0) {
         listWrapper.style.display = 'none';
@@ -250,14 +250,11 @@ function renderIngredientsList(listElement, ingredients, type, totalFlourWeight)
     filteredIngredients.forEach(ingredient => {
         const clone = listElement.children[0].cloneNode(true); // Clone the template
 
-        const fields = ingredient.mapValue.fields;
-        const name = fields.name.stringValue;
-        const weight = fields.weight.doubleValue;
-        const percent = totalFlourWeight ? (weight / totalFlourWeight) * 100 : 0;
+        const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
 
         // Set the text elements
-        clone.querySelector('[recipe="ingredient-name"]').textContent = name;
-        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight} g`;
+        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
+        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight} g`;
         clone.querySelector('[recipe="ingredient-percent"]').textContent = `${percent.toFixed(1)}%`;
 
         listElement.appendChild(clone);
@@ -266,20 +263,13 @@ function renderIngredientsList(listElement, ingredients, type, totalFlourWeight)
 
 function updateIngredientsLists(ingredients) {
     const totalFlourWeight = ingredients.reduce((total, ingredient) => {
-        const type = ingredient.mapValue.fields.type.stringValue;
-        const weight = ingredient.mapValue.fields.weight.doubleValue;
-        return type === "Flour" ? total + weight : total;
+        return ingredient.type === "Flour" ? total + ingredient.weight : total;
     }, 0);
 
-    const flourListElement = document.querySelector('[recipe="flour-list"]');
-    const fluidListElement = document.querySelector('[recipe="fluid-list"]');
-    const basicsListElement = document.querySelector('[recipe="basics-list"]');
-    const additionsListElement = document.querySelector('[recipe="additions-list"]');
-
-    renderIngredientsList(flourListElement, ingredients, "Flour", totalFlourWeight);
-    renderIngredientsList(fluidListElement, ingredients, "Fluid", totalFlourWeight);
-    renderIngredientsList(basicsListElement, ingredients, "Starter", totalFlourWeight); // Adjust if different type
-    renderIngredientsList(additionsListElement, ingredients, "Addition", totalFlourWeight);
+    renderIngredientsList(document.querySelector('[recipe="flour-list"]'), ingredients, ["Flour"], totalFlourWeight);
+    renderIngredientsList(document.querySelector('[recipe="fluid-list"]'), ingredients, ["Fluid"], totalFlourWeight);
+    renderIngredientsList(document.querySelector('[recipe="basics-list"]'), ingredients, ["Starter", "Yeast", "Salt"], totalFlourWeight);
+    renderIngredientsList(document.querySelector('[recipe="additions-list"]'), ingredients, ["Addition"], totalFlourWeight);
 }
 
 // Function for updating recipe page data
@@ -316,8 +306,8 @@ function updatePageWithRecipeData(recipeData) {
     }
 
     // Update ingredients lists
-    updateIngredientsLists(recipeData.fields.ingredients.arrayValue.values);
-
+    updateIngredientsLists(recipeData.ingredients);
+    
     // Update format
     updateFormatElements(recipeData);
 
