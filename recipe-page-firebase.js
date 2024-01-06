@@ -284,6 +284,7 @@ function updateIngredientsLists(ingredients) {
 
 // Function for updating recipe page data
 function updatePageWithRecipeData(recipeData) {
+    console.log("Recipe Data:", recipeData); // Debugging
     // Update simple text fields
     document.querySelector('[recipe="recipe-title"]').textContent = recipeData.title || "Recipe title";
     document.querySelector('[recipe="recipe-description"]').textContent = recipeData.description || "No description provided";
