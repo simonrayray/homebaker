@@ -259,7 +259,7 @@ function renderIngredientsList(listElement, ingredients, types, totalFlourWeight
 
         // Set the text elements
         clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight} g`;
+        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}`;
         clone.querySelector('[recipe="ingredient-percent"]').textContent = `${percent.toFixed(1)}%`;
 
         listElement.appendChild(clone);
