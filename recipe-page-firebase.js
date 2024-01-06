@@ -1,4 +1,5 @@
 // Function to fetch data from Firestore
+import { app } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 export async function fetchRecipeData(recipeId) {
