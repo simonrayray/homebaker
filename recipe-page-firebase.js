@@ -230,10 +230,15 @@ function renderListItems(listElement, items, templateHTML, templateClass) {
         listElement.appendChild(clone);
     });
 }
-// Ingredients list
+// Ingredients list function
 function renderIngredientsList(listElement, ingredients, types, totalFlourWeight) {
-    // Clear the list before adding new items
-    listElement.innerHTML = '';
+    if (!listElement || listElement.children.length === 0) {
+        console.error("No template found in the list.");
+        return;
+    }
+
+    const templateElement = listElement.children[0].cloneNode(true); // Clone the template
+    listElement.innerHTML = ''; // Clear the list
 
     const filteredIngredients = ingredients.filter(ingredient => 
         types.includes(ingredient.type));
@@ -248,7 +253,7 @@ function renderIngredientsList(listElement, ingredients, types, totalFlourWeight
     }
 
     filteredIngredients.forEach(ingredient => {
-        const clone = listElement.children[0].cloneNode(true); // Clone the template
+        const clone = templateElement.cloneNode(true);
 
         const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
 
@@ -274,13 +279,11 @@ function updateIngredientsLists(ingredients) {
 
 // Function for updating recipe page data
 function updatePageWithRecipeData(recipeData) {
-    console.log("Recipe Data:", recipeData); // Debugging
     // Update simple text fields
     document.querySelector('[recipe="recipe-title"]').textContent = recipeData.title || "Recipe title";
     document.querySelector('[recipe="recipe-description"]').textContent = recipeData.description || "No description provided";
     document.querySelector('[recipe="created-on"]').textContent = formatDate(recipeData.time_created);
     document.querySelector('[recipe="created-by"]').textContent = recipeData.public_author || "Author not available";
-    document.querySelector('[recipe="quantity"]').textContent = recipeData.quantity || "Quantity not available";
     document.querySelector('[recipe="quantity"]').textContent = recipeData.quantity || "Quantity not available";
 
     // Update image
@@ -307,7 +310,7 @@ function updatePageWithRecipeData(recipeData) {
 
     // Update ingredients lists
     updateIngredientsLists(recipeData.ingredients);
-    
+
     // Update format
     updateFormatElements(recipeData);
 
