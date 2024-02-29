@@ -80,8 +80,10 @@ function calculateFlourWeight(ingredients) {
 }
 
 function calculateHydration(flourWeight, fluidWeight) {
-    return flourWeight > 0 ? ((fluidWeight / flourWeight) * 100).toFixed(1) + '%' : '0%';
+    // Make sure to calculate hydration as a number
+    return flourWeight > 0 ? (fluidWeight / flourWeight) * 100 : 0;
 }
+
 
 // Function for formatting date
 function formatDate(firestoreTimestamp) {
@@ -158,13 +160,17 @@ function updateIngredientsList(selector, ingredients) {
 // Update Preferment Lists
 function updatePrefermentLists(prefermentIngredients) {
     const totalPrefermentFlourWeight = calculateFlourWeight(prefermentIngredients);
+    const prefermentFluidWeight = prefermentIngredients
+        .filter(({type}) => type === "Fluid")
+        .reduce((total, {weight}) => total + weight, 0);
     const prefermentWeight = calculateTotalWeight(prefermentIngredients);
-    const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentIngredients);
+    const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentFluidWeight);
 
-    // Update Preferment Overview
+    // Now prefermentHydration is a number, and toFixed can be used safely
     document.querySelector('[recipe="preferment-weight"]').textContent = `${prefermentWeight}g`;
     document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}g`;
     document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
+
 
     // Update lists for preferment ingredients
     updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'));
