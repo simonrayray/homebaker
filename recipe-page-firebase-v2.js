@@ -79,6 +79,17 @@ function calculateFlourWeight(ingredients) {
     return ingredients.filter(({type}) => type === "Flour").reduce((total, {weight}) => total + weight, 0);
 }
 
+// Function for formatting date
+function formatDate(firestoreTimestamp) {
+    if (!firestoreTimestamp || typeof firestoreTimestamp.toDate !== 'function') {
+        return "Date not available";
+    }
+
+    const dateObject = firestoreTimestamp.toDate();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return dateObject.toLocaleDateString('en-US', options);
+}
+
 // Update the recipe page with fetched data
 function updateRecipePage(recipeData) {
     // Update basic information
@@ -99,12 +110,6 @@ function updateRecipePage(recipeData) {
 
     // Hide loader after page is loaded
     hideLoader();
-}
-
-// Function to format Firestore timestamp
-function formatDate(timestamp) {
-    const date = timestamp.toDate();
-    return date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 // Update ingredients lists and calculations
