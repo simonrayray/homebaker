@@ -79,6 +79,10 @@ function calculateFlourWeight(ingredients) {
     return ingredients.filter(({type}) => type === "Flour").reduce((total, {weight}) => total + weight, 0);
 }
 
+function calculateHydration(flourWeight, fluidWeight) {
+    return flourWeight > 0 ? ((fluidWeight / flourWeight) * 100).toFixed(1) + '%' : '0%';
+}
+
 // Function for formatting date
 function formatDate(firestoreTimestamp) {
     if (!firestoreTimestamp || typeof firestoreTimestamp.toDate !== 'function') {
