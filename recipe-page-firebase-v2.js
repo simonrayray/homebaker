@@ -111,6 +111,9 @@ function updateRecipePage(recipeData) {
     // Update recipe steps
     updateRecipeSteps(recipeData.steps);
 
+    // Update ingredient lists
+    updateAllIngredientsLists(recipeData.ingredients);
+
     // Update format
     updateFormatElements(recipeData);
 
@@ -141,55 +144,54 @@ function updateIngredientsAndCalculations(ingredients) {
     // Update Extras Ingredients
     updateExtrasList(extraIngredients);}
 
-// Render list of ingredients to the DOM
-function updateIngredientsList(selector, ingredients) {
-    const listElement = document.querySelector(selector);
-    listElement.innerHTML = ''; // Clear existing list items
-    ingredients.forEach(ingredient => {
-        const li = document.createElement('li');
-        li.className = 'ingredient-list-item';
-        li.innerHTML = `
-            <div class="ingredient-name">${ingredient.name}</div>
-            <div class="ingredient-weight">${ingredient.weight}g</div>
-            <div class="ingredient-percent">${calculateIngredientPercent(ingredient, ingredients)}%</div>
-        `;
-        listElement.appendChild(li);
+// Function to render a specific category of ingredients list (e.g., dough, preferment)
+function renderCategoryIngredientsList(listSelector, ingredients, categoryTotalFlourWeight) {
+    const listElements = document.querySelectorAll(listSelector);
+
+    listElements.forEach(listElement => {
+        const ingredientType = listElement.getAttribute('recipe-type');
+        const filteredIngredients = ingredients.filter(ingredient => ingredient.type === ingredientType);
+
+        if (filteredIngredients.length > 0) {
+            // Clear the list except the template (assumed to be the first child)
+            while (listElement.children.length > 1) {
+                listElement.removeChild(listElement.lastChild);
+            }
+            const templateElement = listElement.children[0];
+
+            filteredIngredients.forEach(ingredient => {
+                const clone = templateElement.cloneNode(true);
+                // Adjust percent calculation based on the category (dough/preferment)
+                const percent = categoryTotalFlourWeight ? (ingredient.weight / categoryTotalFlourWeight * 100).toFixed(1) : 0;
+
+                clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
+                clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}g`;
+                clone.querySelector('[recipe="ingredient-percent"]').textContent = `${percent}%`;
+
+                listElement.appendChild(clone);
+            });
+
+            // Optionally, hide or remove the template from the display list
+            templateElement.style.display = 'none';
+        } else {
+            // If no ingredients of this type, optionally hide the list or indicate it's empty
+            listElement.parentElement.style.display = 'none';
+        }
     });
 }
 
-// Update Preferment Lists
-function updatePrefermentLists(prefermentIngredients) {
-    const totalPrefermentFlourWeight = calculateFlourWeight(prefermentIngredients);
-    const prefermentFluidWeight = prefermentIngredients
-        .filter(({type}) => type === "Fluid")
-        .reduce((total, {weight}) => total + weight, 0);
-    const prefermentWeight = calculateTotalWeight(prefermentIngredients);
-    const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentFluidWeight);
+function updateAllIngredientsLists(ingredients) {
+    // Calculate total flour weight for dough and preferment separately
+    const totalDoughFlourWeight = ingredients.filter(ingredient => !ingredient.preferment && ingredient.type === "Flour")
+                                             .reduce((total, ingredient) => total + ingredient.weight, 0);
 
-    // Now prefermentHydration is a number, and toFixed can be used safely
-    document.querySelector('[recipe="preferment-weight"]').textContent = `${prefermentWeight}g`;
-    document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}g`;
-    document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
+    const totalPrefermentFlourWeight = ingredients.filter(ingredient => ingredient.preferment && ingredient.type === "Flour")
+                                                   .reduce((total, ingredient) => total + ingredient.weight, 0);
 
-
-    // Update lists for preferment ingredients
-    updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'));
-    updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'));
-    // For basics and additions, adjust based on your data structure, including if other types are part of the preferment
-    updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)));
-    updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'));
-}
-
-// Update Extras List
-function updateExtrasList(extraIngredients) {
-    updateIngredientsList('[recipe="extras-list"]', extraIngredients);
-    // Check if there are any extra ingredients to decide whether to show or hide the extras section
-    const extrasSection = document.querySelector('[recipe="extras-section"]');
-    if (extraIngredients.length > 0) {
-        extrasSection.style.display = ''; // Show
-    } else {
-        extrasSection.style.display = 'none'; // Hide
-    }
+    // Render lists for each category
+    renderCategoryIngredientsList('[recipe="dough-ingredients"] [recipe-type]', ingredients.filter(ingredient => !ingredient.preferment), totalDoughFlourWeight);
+    renderCategoryIngredientsList('[recipe="preferment-ingredients"] [recipe-type]', ingredients.filter(ingredient => ingredient.preferment), totalPrefermentFlourWeight);
+    renderCategoryIngredientsList('[recipe="extras-list"]', ingredients.filter(ingredient => ingredient.type === "Extra"), 0); // Extras might not need total flour weight
 }
 
 // Calculate ingredient percent based on total flour weight in the recipe
