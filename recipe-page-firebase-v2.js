@@ -73,10 +73,10 @@ function calculateHydration(flourWeight, ingredients) {
 function updateIngredientsList(selector, ingredients, totalFlourWeight) {
       const list = document.querySelector(selector);
       const template = list.children[0].cloneNode(true); // Clone the template
-      listElement.innerHTML = ''; // Clear the list
+      list.innerHTML = ''; // Clear the list
     
       // Hide the list wrapper if no ingredients of these types
-      const listWrapper = listElement.parentElement;
+      const listWrapper = list.parentElement;
         if (filteredIngredients.length === 0) {
          listWrapper.style.display = 'none';
          return;
