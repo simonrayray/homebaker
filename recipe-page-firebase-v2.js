@@ -85,9 +85,9 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
         }
 
       list.innerHTML = ''; // Clear the list
-      const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
       ingredients.forEach(ingredient => {
         const clone = document.importNode(template, true);
+        const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
         clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
         clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}g`;
         clone.querySelector('[recipe="ingredient-percent"]').textContent = `${percent.toFixed(1)}%`;
