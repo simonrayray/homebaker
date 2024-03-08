@@ -77,7 +77,7 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
     
       // Hide the list wrapper if no ingredients of these types
       const listWrapper = list.parentElement;
-        if (filteredIngredients.length === 0) {
+        if (ingredients.length === 0) {
          listWrapper.style.display = 'none';
          return;
      } else {
