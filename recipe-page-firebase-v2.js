@@ -89,11 +89,20 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
       prefermentSection.classList.add('is-hidden');
     }
 
-     // Toggle preferment item visibility
-     const prefermentItem = document.querySelector('[recipe="preferment-dough-item"]');
-     if (prefermentIngredients.length < 1) {
+    // Toggle preferment item visibility
+    const prefermentItem = document.querySelector('[recipe="preferment-dough-item"]');
+    if (prefermentIngredients.length < 1) {
         prefermentItem.classList.add('is-hidden');
-     }
+    } else {
+        prefermentItem.classList.remove('is-hidden');
+        // Additionally, ensure the parent element of the dough-basics-list is visible if there are preferment items
+        const doughBasicsListWrapper = document.querySelector('[recipe="dough-basics-list"]').parentElement;
+        if (doughBasicsListWrapper) {
+            doughBasicsListWrapper.classList.remove('is-hidden');
+            doughBasicsListWrapper.style.display = ''; // Ensure it's visible by resetting any inline display style
+        }
+    }
+
 
     // Toggle extras section visibility
     const extrasSection = document.querySelector('[recipe="extras-section"]');
