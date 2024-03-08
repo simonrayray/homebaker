@@ -45,9 +45,15 @@ function getUnit(format) {
   return format === 'grams' ? 'g' : format === 'ounces' ? 'oz' : 'Unknown unit';
 }
 
-function formatDate(timestamp) {
-  const date = new Date(timestamp.seconds * 1000);
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+// Function for formatting date
+function formatDate(firestoreTimestamp) {
+    if (!firestoreTimestamp || typeof firestoreTimestamp.toDate !== 'function') {
+        return "Date not available";
+    }
+
+    const dateObject = firestoreTimestamp.toDate();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return dateObject.toLocaleDateString('en-US', options);
 }
 
 function calculateTotalWeight(ingredients) {
