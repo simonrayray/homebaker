@@ -96,7 +96,7 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
      } else {
        prefermentItem.classList.add('is-hidden');
      }
-     
+
     // Toggle extras section visibility
     const extrasSection = document.querySelector('[recipe="extras-section"]');
     if (extraIngredients.length > 0) {
@@ -107,31 +107,44 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
   }
   
 
-// Update Ingredients List
 function updateIngredientsList(selector, ingredients, totalFlourWeight) {
-      const list = document.querySelector(selector);
-      const template = list.children[0].cloneNode(true); // Clone the template
-      list.innerHTML = ''; // Clear the list
-    
-      // Hide the list wrapper if no ingredients of these types
-      const listWrapper = list.parentElement;
-        if (ingredients.length === 0) {
-         listWrapper.style.display = 'none';
-         return;
-     } else {
-        listWrapper.style.display = '';
-        }
+  const list = document.querySelector(selector);
+  if (!list) {
+    console.error(`List not found for selector: ${selector}`);
+    return; // Exit the function if list is not found
+  }
 
-      list.innerHTML = ''; // Clear the list
-      ingredients.forEach(ingredient => {
-        const clone = document.importNode(template, true);
-        const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
-        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}`;
-        clone.querySelector('[recipe="ingredient-percent"]').textContent = `${percent.toFixed(1)}%`;
-        list.appendChild(clone);
-      });
+  const template = list.children[0].cloneNode(true); // Assume the first child is your template
+  list.innerHTML = ''; // Clear existing items
+  
+  ingredients.forEach(ingredient => {
+    const clone = template.cloneNode(true); // Clone the template for each ingredient
+    
+    // Set the ingredient name and weight
+    const nameElement = clone.querySelector('[recipe="ingredient-name"]');
+    const weightElement = clone.querySelector('[recipe="ingredient-weight"]');
+    if (nameElement) nameElement.textContent = ingredient.name;
+    if (weightElement) weightElement.textContent = `${ingredient.weight}g`;
+
+    // Set the ingredient percent if the element exists and totalFlourWeight is provided
+    const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
+    if (percentElement && totalFlourWeight) {
+      const percent = (ingredient.weight / totalFlourWeight * 100).toFixed(1);
+      percentElement.textContent = `${percent}%`;
+    } else if (percentElement) {
+      // If the element exists but no totalFlourWeight is provided, hide or remove the element
+      percentElement.style.display = 'none';
     }
+    
+    list.appendChild(clone);
+  });
+
+  // After adding all ingredients, optionally remove or hide the template from display
+  if (list.children[0]) {
+    list.children[0].style.display = 'none'; // Or remove it entirely if not needed
+  }
+}
+
 
 
 // Main Update Function
