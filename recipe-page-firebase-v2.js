@@ -70,9 +70,9 @@ function calculateHydration(flourWeight, ingredients) {
 }
 
 // Update Ingredients List
-function updateIngredientsList(selector, ingredients) {
+function updateIngredientsList(selector, ingredients, totalFlourWeight) {
       const list = document.querySelector(selector);
-      const template = listElement.children[0].cloneNode(true); // Clone the template
+      const template = list.children[0].cloneNode(true); // Clone the template
       listElement.innerHTML = ''; // Clear the list
     
       // Hide the list wrapper if no ingredients of these types
@@ -143,16 +143,16 @@ function updatePageWithRecipeData(recipeData) {
   document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
 
   // Update dough ingredients lists
-  updateIngredientsList('[recipe="dough-flour-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Flour'));
-  updateIngredientsList('[recipe="dough-fluid-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Fluid'));
-  updateIngredientsList('[recipe="dough-basics-list"]', doughIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)));
-  updateIngredientsList('[recipe="dough-additions-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Addition'));
+  updateIngredientsList('[recipe="dough-flour-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
+  updateIngredientsList('[recipe="dough-fluid-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
+  updateIngredientsList('[recipe="dough-basics-list"]', doughIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
+  updateIngredientsList('[recipe="dough-additions-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
   
   // Update preferment ingredients lists
-  updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'));
-  updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'));
-  updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)));
-  updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'));
+  updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
+  updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
+  updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type), totalFlourWeight));
+  updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
 
   // Update extra ingredients lists
   updateIngredientsList('[recipe="extras-list"]', extraIngredients);
