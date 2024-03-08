@@ -118,9 +118,9 @@ function updatePageWithRecipeData(recipeData) {
   }
 
   // Calculate and update weights and hydration
-  const doughIngredients = ingredients.filter(ingredient => !ingredient.preferment && ingredient.type !== 'Extra');
-  const prefermentIngredients = ingredients.filter(ingredient => ingredient.preferment);
-  const extraIngredients = ingredients.filter(ingredient => ingredient.type === 'Extra');
+  const doughIngredients = recipeData.ingredients.filter(ingredient => !ingredient.preferment && ingredient.type !== 'Extra');
+  const prefermentIngredients = recipeData.ingredients.filter(ingredient => ingredient.preferment);
+  const extraIngredients = recipeData.ingredients.filter(ingredient => ingredient.type === 'Extra');
 
   // Calculate dough stats
   const totalDoughWeight = calculateTotalWeight(doughIngredients);
