@@ -89,7 +89,7 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
         const clone = document.importNode(template, true);
         const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
         clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}g`;
+        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}`;
         clone.querySelector('[recipe="ingredient-percent"]').textContent = `${percent.toFixed(1)}%`;
         list.appendChild(clone);
       });
@@ -98,11 +98,11 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
 
 // Main Update Function
 function updatePageWithRecipeData(recipeData) {
-  document.querySelector('[recipe="recipe-title"]').textContent = recipeData.title;
-  document.querySelector('.recipe-image').src = recipeData.image_url;
-  document.querySelector('[recipe="recipe-description"]').textContent = recipeData.description;
-  document.querySelector('[recipe="created-on"]').textContent = formatDate(recipeData.created_on);
-  document.querySelector('[recipe="created-by"]').textContent = recipeData.created_by;
+    document.querySelector('[recipe="recipe-title"]').textContent = recipeData.title || "Recipe title";
+    document.querySelector('[recipe="recipe-description"]').textContent = recipeData.description || "No description provided";
+    document.querySelector('[recipe="created-on"]').textContent = formatDate(recipeData.time_created);
+    document.querySelector('[recipe="created-by"]').textContent = recipeData.public_author || "Author not available";
+    document.querySelector('[recipe="quantity"]').textContent = recipeData.quantity || "Quantity not available";
 
   const unit = getUnit(recipeData.format);
   document.querySelectorAll('[recipe="format"]').forEach(element => element.textContent = unit);
@@ -119,13 +119,14 @@ function updatePageWithRecipeData(recipeData) {
 
   // Calculate and update weights and hydration
   const doughIngredients = recipeData.ingredients.filter(ingredient => !ingredient.preferment && ingredient.type !== 'Extra');
+  const totalDoughIngredients = recipeData.ingredients.filter(ingredient => ingredient.type !== 'Extra');
   const prefermentIngredients = recipeData.ingredients.filter(ingredient => ingredient.preferment);
   const extraIngredients = recipeData.ingredients.filter(ingredient => ingredient.type === 'Extra');
 
   // Calculate dough stats
-  const totalDoughWeight = calculateTotalWeight(doughIngredients);
-  const totalFlourWeight = calculateFlourWeight(doughIngredients);
-  const hydration = calculateHydration(totalFlourWeight, doughIngredients);
+  const totalDoughWeight = calculateTotalWeight(totalDoughIngredients);
+  const totalFlourWeight = calculateFlourWeight(totalDoughIngredients);
+  const hydration = calculateHydration(totalFlourWeight, totalDoughIngredients);
 
   // Calculate preferment stats
   const totalPrefermentDoughWeight = calculateTotalWeight(prefermentIngredients);
@@ -133,13 +134,15 @@ function updatePageWithRecipeData(recipeData) {
   const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentIngredients);
 
   // Dough stats overview
-  document.querySelector('[recipe="dough-weight"]').textContent = `${totalDoughWeight}g`;
-  document.querySelector('[recipe="flour-weight"]').textContent = `${totalFlourWeight}g`;
+  document.querySelector('[recipe="dough-weight"]').textContent = `${totalDoughWeight}`;
+  document.querySelector('[recipe="flour-weight"]').textContent = `${totalFlourWeight}`;
   document.querySelector('[recipe="hydration"]').textContent = `${hydration.toFixed(1)}%`;
 
   // Preferment stats overview
-  document.querySelector('[recipe="preferment-weight"]').textContent = `${totalPrefermentDoughWeight}g`;
-  document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}g`;
+  document.querySelectorAll('[recipe="preferment-weight"]').forEach((element) => {
+    element.textContent = `${totalPrefermentDoughWeight}g`; // Assuming you want to add 'g' for grams
+  });
+  document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}`;
   document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
 
   // Update dough ingredients lists
@@ -153,6 +156,15 @@ function updatePageWithRecipeData(recipeData) {
   updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
   updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type), totalFlourWeight));
   updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
+
+
+  // Assuming totalPrefermentDoughWeight and totalFlourWeight are already calculated
+const prefermentPercent = (totalPrefermentDoughWeight / totalFlourWeight) * 100;
+
+ // Now, update all elements with the recipe attribute preferment-percent
+document.querySelectorAll('[recipe="preferment-percent"]').forEach((element) => {
+  element.textContent = `${prefermentPercent.toFixed(1)}%`;
+});
 
   // Update extra ingredients lists
   updateIngredientsList('[recipe="extras-list"]', extraIngredients);
