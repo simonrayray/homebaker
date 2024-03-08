@@ -91,10 +91,8 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
 
      // Toggle preferment item visibility
      const prefermentItem = document.querySelector('[recipe="preferment-dough-item"]');
-     if (prefermentIngredients.length > 0) {
-       prefermentItem.classList.remove('is-hidden');
-     } else {
-       prefermentItem.classList.add('is-hidden');
+     if (prefermentIngredients.length < 1) {
+        prefermentItem.classList.add('is-hidden');
      }
 
     // Toggle extras section visibility
@@ -186,7 +184,7 @@ function updatePageWithRecipeData(recipeData) {
 
   // Preferment stats overview
   document.querySelectorAll('[recipe="preferment-weight"]').forEach((element) => {
-    element.textContent = `${totalPrefermentDoughWeight}g`; // Assuming you want to add 'g' for grams
+    element.textContent = `${totalPrefermentDoughWeight}`; // Assuming you want to add 'g' for grams
   });
   document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}`;
   document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
