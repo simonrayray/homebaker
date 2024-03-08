@@ -45,6 +45,17 @@ function getUnit(format) {
   return format === 'grams' ? 'g' : format === 'ounces' ? 'oz' : 'Unknown unit';
 }
 
+// Function to update the recipe image
+function updateImageSrc(recipeData) {
+
+    const imageUrl = recipeData.image_url
+
+    const thumbnailImageElement = document.querySelector('.recipe-image');
+    if (thumbnailImageElement && recipeData.image_url) {
+        thumbnailImageElement.src = imageUrl;
+    }
+}
+
 // Function for formatting date
 function formatDate(firestoreTimestamp) {
     if (!firestoreTimestamp || typeof firestoreTimestamp.toDate !== 'function') {
@@ -68,6 +79,33 @@ function calculateHydration(flourWeight, ingredients) {
   const waterWeight = ingredients.filter(ingredient => ingredient.type === "Fluid").reduce((total, ingredient) => total + ingredient.weight, 0);
   return (waterWeight / flourWeight) * 100;
 }
+
+function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients) {
+    // Toggle preferment section visibility
+    const prefermentSection = document.querySelector('[recipe="preferment-section"]');
+    if (prefermentIngredients.length > 0) {
+      prefermentSection.classList.remove('is-hidden');
+    } else {
+      prefermentSection.classList.add('is-hidden');
+    }
+
+     // Toggle preferment item visibility
+     const prefermentItem = document.querySelector('[recipe="preferment-dough-item"]');
+     if (prefermentIngredients.length > 0) {
+       prefermentItem.classList.remove('is-hidden');
+     } else {
+       prefermentItem.classList.add('is-hidden');
+     }
+     
+    // Toggle extras section visibility
+    const extrasSection = document.querySelector('[recipe="extras-section"]');
+    if (extraIngredients.length > 0) {
+      extrasSection.classList.remove('is-hidden');
+    } else {
+      extrasSection.classList.add('is-hidden');
+    }
+  }
+  
 
 // Update Ingredients List
 function updateIngredientsList(selector, ingredients, totalFlourWeight) {
@@ -103,6 +141,9 @@ function updatePageWithRecipeData(recipeData) {
     document.querySelector('[recipe="created-on"]').textContent = formatDate(recipeData.time_created);
     document.querySelector('[recipe="created-by"]').textContent = recipeData.public_author || "Author not available";
     document.querySelector('[recipe="quantity"]').textContent = recipeData.quantity || "Quantity not available";
+
+     // Update image
+    updateImageSrc(recipeData);
 
   const unit = getUnit(recipeData.format);
   document.querySelectorAll('[recipe="format"]').forEach(element => element.textContent = unit);
@@ -161,13 +202,16 @@ function updatePageWithRecipeData(recipeData) {
   // Assuming totalPrefermentDoughWeight and totalFlourWeight are already calculated
 const prefermentPercent = (totalPrefermentDoughWeight / totalFlourWeight) * 100;
 
- // Now, update all elements with the recipe attribute preferment-percent
+ // Update all elements with the recipe attribute preferment-percent
 document.querySelectorAll('[recipe="preferment-percent"]').forEach((element) => {
   element.textContent = `${prefermentPercent.toFixed(1)}%`;
 });
 
   // Update extra ingredients lists
   updateIngredientsList('[recipe="extras-list"]', extraIngredients);
+
+  // Toggle visibility of preferment and extras sections based on their content
+  toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients);
 
   // Update preferment item in dough list
 
