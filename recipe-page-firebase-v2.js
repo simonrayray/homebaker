@@ -198,7 +198,7 @@ function updatePageWithRecipeData(recipeData) {
 
     // Preferment stats overview
     document.querySelectorAll('[recipe="preferment-weight"]').forEach((element) => {
-        element.textContent = `${totalPrefermentDoughWeight}`; // Assuming you want to add 'g' for grams
+        element.textContent = `${totalPrefermentDoughWeight}`;
     });
     document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}`;
     document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
@@ -212,7 +212,7 @@ function updatePageWithRecipeData(recipeData) {
     // Update preferment ingredients lists
     updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
     updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
-    updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type), totalFlourWeight));
+    updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
     updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
 
 
@@ -230,7 +230,8 @@ function updatePageWithRecipeData(recipeData) {
     // Toggle visibility of preferment and extras sections based on their content
     toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients);
 
-    // Update preferment item in dough list
+    // Update the page title with the recipe title and " | Made with Homebaker"
+    document.title = `${recipeData.title || "Recipe made with Homebaker"} | Made with Homebaker`;
 
     hideLoader();
 }
