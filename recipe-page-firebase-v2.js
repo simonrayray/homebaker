@@ -118,32 +118,39 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
 function updateIngredientsList(selector, ingredients, totalFlourWeight) {
     const list = document.querySelector(selector);
     const template = list.children[0].cloneNode(true); // Clone the template
-    list.innerHTML = ''; // Clear the list
-  
+    list.innerHTML = ''; // Clear the list before repopulating
+    
     // Hide the list wrapper if no ingredients of these types
     const listWrapper = list.parentElement;
-      if (ingredients.length === 0) {
-       listWrapper.style.display = 'none';
-       return;
-   } else {
-      listWrapper.style.display = '';
-      }
-
-    list.innerHTML = ''; // Clear the list
-    ingredients.forEach(ingredient => {
-      const clone = document.importNode(template, true);
-      const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
-      clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-      clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}`;
-    // Only set percent if ingredient is not 'Extra', checking the ingredient's type
-    const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
-    if (percentElement && ingredient.type !== 'Extra' && totalFlourWeight) {
-        percentElement.textContent = `${percent.toFixed(1)}%`;
+    if (ingredients.length === 0 && selector !== '[recipe="dough-basics-list"]') {
+        listWrapper.style.display = 'none';
+        return;
+    } else {
+        listWrapper.style.display = '';
     }
 
-    list.appendChild(clone);
+    ingredients.forEach(ingredient => {
+        const clone = document.importNode(template.content, true); // Ensure to use .content for templates
+        const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
+        
+        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
+        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight || ''}g`;
+
+        // Conditionally hide the weight wrapper if weight is not set or 0
+        if (ingredient.type === 'Extra' && (!ingredient.weight || ingredient.weight === 0)) {
+            clone.querySelector('[recipe="extras-weight-wrapper"]').classList.add('is-hidden');
+        } else if (ingredient.type !== 'Extra') {
+            // Only set percent if ingredient type isn't Extra
+            const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
+            if (percentElement) { // Check if percent element exists
+                percentElement.textContent = `${percent.toFixed(1)}%`;
+            }
+        }
+        
+        list.appendChild(clone);
     });
-  }
+}
+
 
 
 // Main Update Function
