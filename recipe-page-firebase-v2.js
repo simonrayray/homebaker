@@ -36,6 +36,15 @@ export async function fetchRecipeData(recipeId) {
     }
 }
 
+// Global toggle state for including starter in calculations
+let includeStarterFlour = false;
+
+// Function to toggle the inclusion of starter flour in calculations
+function toggleIncludeStarterFlour() {
+    includeStarterFlour = !includeStarterFlour;
+    updatePageWithRecipeData(recipeData);
+}
+
 // Utility Functions
 function hideLoader() {
     document.querySelector('.loader-wrapper').style.display = 'none';
@@ -71,13 +80,33 @@ function calculateTotalWeight(ingredients) {
     return ingredients.reduce((total, ingredient) => total + ingredient.weight, 0);
 }
 
-function calculateFlourWeight(ingredients) {
-    return ingredients.filter(ingredient => ingredient.type === "Flour").reduce((total, ingredient) => total + ingredient.weight, 0);
+// Function to calculate total fluid weight, including starter water
+function calculateTotalFluidWeight(ingredients) {
+    return ingredients.reduce((total, ingredient) => {
+        // Always include starter water in the calculation
+        if (ingredient.type === 'Fluid' || (ingredient.starter === true && ingredient.type === 'Fluid')) {
+            return total + ingredient.weight;
+        }
+        return total;
+    }, 0);
 }
 
-function calculateHydration(flourWeight, ingredients) {
-    const waterWeight = ingredients.filter(ingredient => ingredient.type === "Fluid").reduce((total, ingredient) => total + ingredient.weight, 0);
-    return (waterWeight / flourWeight) * 100;
+// Function to calculate total flour weight, including starter flour
+function calculateTotalFlourWeight(ingredients) {
+    return ingredients.reduce((total, ingredient) => {
+        // Check if ingredient is part of starter and should be included based on the toggle
+        if (ingredient.type === 'Flour' || (includeStarterFlour && ingredient.starter === true && ingredient.type === 'Flour')) {
+            return total + ingredient.weight;
+        }
+        return total;
+    }, 0);
+}
+
+// Function to calculate hydration, including starter
+function calculateHydration(ingredients) {
+    const totalFlourWeight = calculateTotalFlourWeight(ingredients);
+    const totalWaterWeight = calculateTotalFluidWeight(ingredients);
+    return totalFlourWeight > 0 ? (totalWaterWeight / totalFlourWeight) * 100 : 0;
 }
 
 function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients) {
@@ -133,19 +162,39 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
     ingredients.forEach(ingredient => {
         const clone = document.importNode(template, true);
         const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
-        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}`;
 
-        // Conditionally hide the weight wrapper if weight is not set or 0
-        if (ingredient.type === 'Extra' && (!ingredient.weight || ingredient.weight === 0)) {
-            clone.querySelector('[recipe="extras-weight-wrapper"]').classList.add('is-hidden');
-        } else if (ingredient.type !== 'Extra') {
-            // Only set percent if ingredient is not 'Extra', checking the ingredient's type
+        // Set name
+        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
+
+        // Set weight, using display_weight for starter ingredients
+        const weight = ingredient.starter ? ingredient.display_weight : ingredient.weight;
+        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight}`;
+
+        // Handling hydration percent visibility
+        const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
+        const hydrationPercentWrapper = hydrationPercentElement ? hydrationPercentElement.parentElement : null;
+        if (ingredient.type === "Starter" && ingredient.hydration && hydrationPercentWrapper) {
+            hydrationPercentElement.textContent = `${ingredient.hydration}%`;
+            hydrationPercentWrapper.classList.remove('is-hidden');
+        } else if (hydrationPercentWrapper) {
+            hydrationPercentWrapper.classList.add('is-hidden');
+        }
+
+        if (ingredient.type !== 'Extra') {
             const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
-            if (percentElement && ingredient.type !== 'Extra' && totalFlourWeight) {
+            if (percentElement) {
+                let flourWeightForCalculation = totalFlourWeight;
+
+                // Adjust total flour weight for calculation based on toggle state if ingredient is starter
+                if (ingredient.type === "Starter" && !includeStarterFlour) {
+                    flourWeightForCalculation -= ingredient.weight; // Assuming ingredient.weight is the total flour content of the starter
+                }
+
+                const percent = flourWeightForCalculation ? (ingredient.weight / flourWeightForCalculation) * 100 : 0;
                 percentElement.textContent = `${percent.toFixed(1)}%`;
             }
         }
+        
         list.appendChild(clone);
     });
 
@@ -183,12 +232,12 @@ function updatePageWithRecipeData(recipeData) {
 
     // Calculate dough stats
     const totalDoughWeight = calculateTotalWeight(totalDoughIngredients);
-    const totalFlourWeight = calculateFlourWeight(totalDoughIngredients);
+    const totalFlourWeight = calculateTotalFlourWeight(totalDoughIngredients);
     const hydration = calculateHydration(totalFlourWeight, totalDoughIngredients);
 
     // Calculate preferment stats
     const totalPrefermentDoughWeight = calculateTotalWeight(prefermentIngredients);
-    const totalPrefermentFlourWeight = calculateFlourWeight(prefermentIngredients);
+    const totalPrefermentFlourWeight = calculateTotalFlourWeight(prefermentIngredients);
     const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentIngredients);
 
     // Dough stats overview
@@ -310,6 +359,9 @@ async function main() {
     if (recipeData) {
         updatePageWithRecipeData(recipeData);
     }
+    // Attach event listener to toggle
+    document.getElementById('starterToggle').addEventListener('change', toggleIncludeStarterFlour);
+
 }
 
 main();
