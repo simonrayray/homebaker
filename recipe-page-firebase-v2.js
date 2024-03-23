@@ -82,24 +82,37 @@ function calculateTotalWeight(ingredients) {
 
 // Function to calculate total fluid weight, including starter water
 function calculateTotalFluidWeight(ingredients) {
+    // Ensure ingredients is an array and not undefined or null
+    if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        return 0; // Return 0 if ingredients is not an array or is empty
+    }
+
     return ingredients.reduce((total, ingredient) => {
-        // Always include starter water in the calculation
-        if (ingredient.type === 'Fluid' || (ingredient.starter === true && ingredient.type === 'Fluid')) {
-            return total + ingredient.weight;
+        // Include condition for 'starter' if needed, based on your logic
+        if (ingredient.type === 'Fluid' || (ingredient.starter && ingredient.type === 'Fluid')) {
+            return total + (ingredient.weight || 0); // Ensure ingredient.weight is a number, fallback to 0
         }
         return total;
-    }, 0);
+    }, 0); // 0 is the initial value for total
 }
+
 
 // Function to calculate total flour weight, including starter flour
 function calculateTotalFlourWeight(ingredients) {
+    // Ensure ingredients is an array and not undefined or null
+    if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        return 0; // Return 0 if ingredients is not an array or is empty
+    }
+
     return ingredients.reduce((total, ingredient) => {
+        // Include condition for 'starter' if needed, based on your logic
         if (ingredient.type === 'Flour' || (ingredient.starter && ingredient.type === 'Flour')) {
-            return total + ingredient.weight;
+            return total + (ingredient.weight || 0); // Ensure ingredient.weight is a number, fallback to 0
         }
         return total;
-    }, 0);
+    }, 0); // 0 is the initial value for total
 }
+
 
 
 // Function to calculate hydration, including starter
