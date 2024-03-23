@@ -108,9 +108,7 @@ function calculateTotalFluidWeight(ingredients) {
         if (ingredient.type === 'Fluid') {
             return total + (Number(ingredient.weight) || 0);
         } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
-            // Assuming half of the starter's display_weight contributes to fluid
-            // Adjust the ratio according to your starter's usual hydration if needed
-            return total + (Number(ingredient.displayWeight) * 0.5 || 0);
+            return total + (Number(ingredient.displayWeight) || 0);
         }
         return total;
     }, 0);
@@ -126,15 +124,11 @@ function calculateTotalFlourWeight(ingredients) {
         if (ingredient.type === 'Flour') {
             return total + (Number(ingredient.weight) || 0);
         } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
-            // Assuming half of the starter's display_weight contributes to flour
-            // Adjust the ratio according to your starter's usual hydration if needed
-            return total + (Number(ingredient.displayWeight) * 0.5 || 0);
+            return total + (Number(ingredient.displayWeight) || 0);
         }
         return total;
     }, 0);
 }
-
-
 
 // Function to calculate hydration, including starter
 function calculateHydration(ingredients) {
@@ -195,41 +189,44 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
 
     list.innerHTML = ''; // Clear the list
     ingredients.forEach(ingredient => {
+        // Skip rendering starter ingredients in flour and fluid lists
+        if (ingredient.starter) {
+            return; // Skip this iteration if the ingredient is part of a starter
+        }
+
         const clone = document.importNode(template, true);
-        const weight = ingredient.type === "Starter" ? ingredient.displayWeight : ingredient.weight;
+
+        // Set name
         clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
+
+        // Set weight, adjusting for starter ingredients if needed
+        const weight = ingredient.type === "Starter" && ingredient.displayWeight ? ingredient.displayWeight : ingredient.weight;
         clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight}`;
-    
-        // Determine if hydration percent logic should be applied
-        const isBasicsListWithStarter = (selector === '[recipe="dough-basics-list"]' || selector === '[recipe="preferment-basics-list"]') && ingredient.type === "Starter";
-        if (isBasicsListWithStarter) {
-            const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
-            const hydrationPercentWrapper = hydrationPercentElement ? hydrationPercentElement.parentElement : null;
-            if (hydrationPercentWrapper && ingredient.hydration !== undefined) {
+
+        // Handling hydration percent visibility (if applicable to the list)
+        const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
+        if (hydrationPercentElement) {
+            const hydrationPercentWrapper = hydrationPercentElement.parentElement;
+            if (ingredient.hydration !== undefined) {
                 hydrationPercentElement.textContent = `${ingredient.hydration}%`;
                 hydrationPercentWrapper.classList.remove('is-hidden');
-            } else if (hydrationPercentWrapper) {
+            } else {
                 hydrationPercentWrapper.classList.add('is-hidden');
             }
         }
+
+        // Setting percent value for ingredients except 'Extra'
         if (ingredient.type !== 'Extra') {
             const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
             if (percentElement) {
-                let flourWeightForCalculation = totalFlourWeight;
-
-                // Adjust total flour weight for calculation based on toggle state if ingredient is starter
-                if (ingredient.type === "Starter" && !includeStarterFlour) {
-                    flourWeightForCalculation -= ingredient.weight; // Assuming ingredient.weight is the total flour content of the starter
-                }
-
-                const percent = flourWeightForCalculation ? (ingredient.weight / flourWeightForCalculation) * 100 : 0;
+                const flourWeightForCalculation = totalFlourWeight;
+                const percent = flourWeightForCalculation ? (weight / flourWeightForCalculation) * 100 : 0;
                 percentElement.textContent = `${percent.toFixed(1)}%`;
             }
         }
 
         list.appendChild(clone);
     });
-
 }
 
 // Main Update Function
@@ -246,6 +243,19 @@ function updatePageWithRecipeData(recipeData) {
     const unit = getUnit(recipeData.format);
     document.querySelectorAll('[recipe="format"]').forEach(element => element.textContent = unit);
 
+    // Hide steps header if no steps in list
+    const stepsSection = document.getElementById('steps');
+    if (recipeData.steps && recipeData.steps.length < 1) {
+        // If there are no steps, hide the steps section
+        if (stepsSection) {
+            stepsSection.classList.add('is-hidden');
+        }
+    } else {
+        // If there are steps, make sure the section is visible
+        if (stepsSection) {
+            stepsSection.classList.remove('is-hidden');
+        }
+    
     // Update recipe steps
     const stepsListElement = document.querySelector('ul[recipe="steps-list"]');
 
@@ -382,7 +392,7 @@ function renderStepsListItems(listElement, items, templateHTML, templateClass) {
         listElement.appendChild(clone);
     });
 }
-
+}
 
 
 async function main() {
