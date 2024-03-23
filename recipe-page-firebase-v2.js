@@ -357,10 +357,9 @@ async function main() {
     const recipeId = new URLSearchParams(window.location.search).get('id');
     const recipeData = await fetchRecipeData(recipeId);
     if (recipeData) {
+        console.log(recipeData.ingredients);
         updatePageWithRecipeData(recipeData);
     }
-
-    console.log(recipeData.ingredients);
 
     // Attach event listener to toggle
     document.getElementById('starterToggle').addEventListener('change', toggleIncludeStarterFlour);
