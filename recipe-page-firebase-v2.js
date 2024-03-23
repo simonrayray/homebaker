@@ -54,14 +54,19 @@ function getUnit(format) {
     return format === 'grams' ? 'g' : format === 'ounces' ? 'oz' : 'Unknown unit';
 }
 
-// Function to update the recipe image
+// Function to update the recipe image or hide it if not available
 function updateImageSrc(recipeData) {
-
-    const imageUrl = recipeData.image_url
-
+    const imageUrl = recipeData.image_url;
     const thumbnailImageElement = document.querySelector('.recipe-image');
-    if (thumbnailImageElement && recipeData.image_url) {
+    const imageWrapper = thumbnailImageElement ? thumbnailImageElement.parentElement : null;
+
+    if (thumbnailImageElement && imageUrl) {
         thumbnailImageElement.src = imageUrl;
+        // Ensure the wrapper is visible in case it was previously hidden
+        if (imageWrapper) imageWrapper.classList.remove('is-hidden');
+    } else {
+        // Hide the wrapper if no image URL is provided
+        if (imageWrapper) imageWrapper.classList.add('is-hidden');
     }
 }
 
@@ -77,40 +82,56 @@ function formatDate(firestoreTimestamp) {
 }
 
 function calculateTotalWeight(ingredients) {
-    return ingredients.reduce((total, ingredient) => total + ingredient.weight, 0);
+    // Ensure ingredients is an array and not undefined or null
+    if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        return 0; // Return 0 if ingredients is not an array or is empty
+    }
+
+    return ingredients.reduce((total, ingredient) => {
+        // Use display_weight for "Starter" ingredients if it's present and hydration is undefined
+        if (ingredient.type === "Starter" && ingredient.hydration === undefined) {
+            return total + (Number(ingredient.displayWeight) || 0);
+        }
+        // Otherwise, use weight
+        return total + (Number(ingredient.weight) || 0);
+    }, 0);
 }
+
 
 // Function to calculate total fluid weight, including starter water
 function calculateTotalFluidWeight(ingredients) {
-    // Ensure ingredients is an array and not undefined or null
     if (!Array.isArray(ingredients) || ingredients.length === 0) {
-        return 0; // Return 0 if ingredients is not an array or is empty
+        return 0;
     }
 
     return ingredients.reduce((total, ingredient) => {
-        // Include condition for 'starter' if needed, based on your logic
-        if (ingredient.type === 'Fluid' || (ingredient.starter && ingredient.type === 'Fluid')) {
-            return total + (ingredient.weight || 0); // Ensure ingredient.weight is a number, fallback to 0
+        if (ingredient.type === 'Fluid') {
+            return total + (Number(ingredient.weight) || 0);
+        } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
+            // Assuming half of the starter's display_weight contributes to fluid
+            // Adjust the ratio according to your starter's usual hydration if needed
+            return total + (Number(ingredient.displayWeight) * 0.5 || 0);
         }
         return total;
-    }, 0); // 0 is the initial value for total
+    }, 0);
 }
-
 
 // Function to calculate total flour weight, including starter flour
 function calculateTotalFlourWeight(ingredients) {
-    // Ensure ingredients is an array and not undefined or null
     if (!Array.isArray(ingredients) || ingredients.length === 0) {
-        return 0; // Return 0 if ingredients is not an array or is empty
+        return 0;
     }
 
     return ingredients.reduce((total, ingredient) => {
-        // Include condition for 'starter' if needed, based on your logic
-        if (ingredient.type === 'Flour' || (ingredient.starter && ingredient.type === 'Flour')) {
-            return total + (ingredient.weight || 0); // Ensure ingredient.weight is a number, fallback to 0
+        if (ingredient.type === 'Flour') {
+            return total + (Number(ingredient.weight) || 0);
+        } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
+            // Assuming half of the starter's display_weight contributes to flour
+            // Adjust the ratio according to your starter's usual hydration if needed
+            return total + (Number(ingredient.displayWeight) * 0.5 || 0);
         }
         return total;
-    }, 0); // 0 is the initial value for total
+    }, 0);
 }
 
 
