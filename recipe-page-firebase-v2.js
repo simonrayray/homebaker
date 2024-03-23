@@ -325,6 +325,7 @@ function updatePageWithRecipeData(recipeData) {
     document.title = `${recipeData.title || "Recipe made with Homebaker"} | Made with Homebaker`;
 
     hideLoader();
+    }
 }
 
 // Function to render the recipe steps list
