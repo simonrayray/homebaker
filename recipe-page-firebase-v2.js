@@ -94,20 +94,21 @@ function calculateTotalFluidWeight(ingredients) {
 // Function to calculate total flour weight, including starter flour
 function calculateTotalFlourWeight(ingredients) {
     return ingredients.reduce((total, ingredient) => {
-        // Check if ingredient is part of starter and should be included based on the toggle
-        if (ingredient.type === 'Flour' || (includeStarterFlour && ingredient.starter === true && ingredient.type === 'Flour')) {
+        if (ingredient.type === 'Flour' || (ingredient.starter && ingredient.type === 'Flour')) {
             return total + ingredient.weight;
         }
         return total;
     }, 0);
 }
 
+
 // Function to calculate hydration, including starter
 function calculateHydration(ingredients) {
     const totalFlourWeight = calculateTotalFlourWeight(ingredients);
     const totalWaterWeight = calculateTotalFluidWeight(ingredients);
-    return totalFlourWeight > 0 ? (totalWaterWeight / totalFlourWeight) * 100 : 0;
+    return (totalWaterWeight / totalFlourWeight) * 100;
 }
+
 
 function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients) {
     // Toggle preferment section visibility
@@ -161,22 +162,21 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
     list.innerHTML = ''; // Clear the list
     ingredients.forEach(ingredient => {
         const clone = document.importNode(template, true);
-        const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
 
         // Set name
         clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
 
         // Set weight, using display_weight for starter ingredients
-        const weight = ingredient.starter ? ingredient.display_weight : ingredient.weight;
+        const weight = ingredient.type === "Starter" ? ingredient.displayWeight : ingredient.weight;
         clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight}`;
 
         // Handling hydration percent visibility
         const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
         const hydrationPercentWrapper = hydrationPercentElement ? hydrationPercentElement.parentElement : null;
-        if (ingredient.type === "Starter" && ingredient.hydration && hydrationPercentWrapper) {
-            hydrationPercentElement.textContent = `${ingredient.hydration}%`;
-            hydrationPercentWrapper.classList.remove('is-hidden');
-        } else if (hydrationPercentWrapper) {
+
+        if (ingredient.type === "Starter" && ingredient.hydration !== undefined) {
+        clone.querySelector('[recipe="hydration-percent"]').textContent = `Hydration: ${ingredient.hydration}%`;
+        } else {
             hydrationPercentWrapper.classList.add('is-hidden');
         }
 
