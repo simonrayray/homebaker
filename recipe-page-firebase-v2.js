@@ -392,7 +392,6 @@ function renderStepsListItems(listElement, items, templateHTML, templateClass) {
         listElement.appendChild(clone);
     });
 }
-}
 
 
 async function main() {
