@@ -76,8 +76,6 @@ function formatDate(firestoreTimestamp) {
     return dateObject.toLocaleDateString('en-US', options);
 }
 
-console.log(ingredients); // Add this before the reduce call
-
 function calculateTotalWeight(ingredients) {
     return ingredients.reduce((total, ingredient) => total + ingredient.weight, 0);
 }
@@ -361,6 +359,9 @@ async function main() {
     if (recipeData) {
         updatePageWithRecipeData(recipeData);
     }
+
+    console.log(recipeData.ingredients);
+
     // Attach event listener to toggle
     document.getElementById('starterToggle').addEventListener('change', toggleIncludeStarterFlour);
 
