@@ -76,6 +76,8 @@ function formatDate(firestoreTimestamp) {
     return dateObject.toLocaleDateString('en-US', options);
 }
 
+console.log(ingredients); // Add this before the reduce call
+
 function calculateTotalWeight(ingredients) {
     return ingredients.reduce((total, ingredient) => total + ingredient.weight, 0);
 }
@@ -194,7 +196,7 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
                 percentElement.textContent = `${percent.toFixed(1)}%`;
             }
         }
-        
+
         list.appendChild(clone);
     });
 
