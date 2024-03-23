@@ -175,24 +175,22 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
     list.innerHTML = ''; // Clear the list
     ingredients.forEach(ingredient => {
         const clone = document.importNode(template, true);
-
-        // Set name
-        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-
-        // Set weight, using display_weight for starter ingredients
         const weight = ingredient.type === "Starter" ? ingredient.displayWeight : ingredient.weight;
+        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
         clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight}`;
-
-        // Handling hydration percent visibility
-        const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
-        const hydrationPercentWrapper = hydrationPercentElement ? hydrationPercentElement.parentElement : null;
-
-        if (ingredient.type === "Starter" && ingredient.hydration !== undefined) {
-        clone.querySelector('[recipe="hydration-percent"]').textContent = `Hydration: ${ingredient.hydration}%`;
-        } else {
-            hydrationPercentWrapper.classList.add('is-hidden');
+    
+        // Determine if hydration percent logic should be applied
+        const isBasicsListWithStarter = (selector === '[recipe="dough-basics-list"]' || selector === '[recipe="preferment-basics-list"]') && ingredient.type === "Starter";
+        if (isBasicsListWithStarter) {
+            const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
+            const hydrationPercentWrapper = hydrationPercentElement ? hydrationPercentElement.parentElement : null;
+            if (hydrationPercentWrapper && ingredient.hydration !== undefined) {
+                hydrationPercentElement.textContent = `${ingredient.hydration}%`;
+                hydrationPercentWrapper.classList.remove('is-hidden');
+            } else if (hydrationPercentWrapper) {
+                hydrationPercentWrapper.classList.add('is-hidden');
+            }
         }
-
         if (ingredient.type !== 'Extra') {
             const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
             if (percentElement) {
