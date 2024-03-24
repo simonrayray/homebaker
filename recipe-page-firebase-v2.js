@@ -132,6 +132,7 @@ function calculateTotalFlourWeight(ingredients) {
 
 function calculateBakersPercentageFlourWeight(ingredients) {
     // Only include ingredients where starter=true if includeStarterFlour is true
+    console.log("Ingredients before reduce:", ingredients);
     return ingredients.reduce((total, ingredient) => {
         if (ingredient.type === 'Flour' || (includeStarterFlour && ingredient.starter)) {
             return total + (ingredient.weight || 0);
