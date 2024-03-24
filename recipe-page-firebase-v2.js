@@ -181,7 +181,7 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
 
 
 // Update Ingredients List
-function updateIngredientsList(selector, ingredients, totalFlourWeight) {
+function updateIngredientsList(selector, ingredients, totalDoughIngredients) {
     const list = document.querySelector(selector);
     const template = list.children[0].cloneNode(true); // Clone the template
     list.innerHTML = ''; // Clear the list
