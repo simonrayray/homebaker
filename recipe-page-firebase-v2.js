@@ -36,6 +36,15 @@ export async function fetchRecipeData(recipeId) {
     }
 }
 
+// Global toggle state for including starter in calculations
+let includeStarterFlour = false;
+
+// Function to toggle the inclusion of starter flour in calculations
+function toggleIncludeStarterFlour() {
+    includeStarterFlour = !includeStarterFlour;
+    updatePageWithRecipeData(recipeData);
+}
+
 // Utility Functions
 function hideLoader() {
     document.querySelector('.loader-wrapper').style.display = 'none';
@@ -45,14 +54,19 @@ function getUnit(format) {
     return format === 'grams' ? 'g' : format === 'ounces' ? 'oz' : 'Unknown unit';
 }
 
-// Function to update the recipe image
+// Function to update the recipe image or hide it if not available
 function updateImageSrc(recipeData) {
-
-    const imageUrl = recipeData.image_url
-
+    const imageUrl = recipeData.image_url;
     const thumbnailImageElement = document.querySelector('.recipe-image');
-    if (thumbnailImageElement && recipeData.image_url) {
+    const imageWrapper = thumbnailImageElement ? thumbnailImageElement.parentElement : null;
+
+    if (thumbnailImageElement && imageUrl) {
         thumbnailImageElement.src = imageUrl;
+        // Ensure the wrapper is visible in case it was previously hidden
+        if (imageWrapper) imageWrapper.classList.remove('is-hidden');
+    } else {
+        // Hide the wrapper if no image URL is provided
+        if (imageWrapper) imageWrapper.classList.add('is-hidden');
     }
 }
 
@@ -68,17 +82,61 @@ function formatDate(firestoreTimestamp) {
 }
 
 function calculateTotalWeight(ingredients) {
-    return ingredients.reduce((total, ingredient) => total + ingredient.weight, 0);
+    // Ensure ingredients is an array and not undefined or null
+    if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        return 0; // Return 0 if ingredients is not an array or is empty
+    }
+
+    return ingredients.reduce((total, ingredient) => {
+        // Use display_weight for "Starter" ingredients if it's present and hydration is undefined
+        if (ingredient.type === "Starter" && ingredient.hydration === undefined) {
+            return total + (Number(ingredient.displayWeight) || 0);
+        }
+        // Otherwise, use weight
+        return total + (Number(ingredient.weight) || 0);
+    }, 0);
 }
 
-function calculateFlourWeight(ingredients) {
-    return ingredients.filter(ingredient => ingredient.type === "Flour").reduce((total, ingredient) => total + ingredient.weight, 0);
+
+// Function to calculate total fluid weight, including starter water
+function calculateTotalFluidWeight(ingredients) {
+    if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        return 0;
+    }
+
+    return ingredients.reduce((total, ingredient) => {
+        if (ingredient.type === 'Fluid') {
+            return total + (Number(ingredient.weight) || 0);
+        } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
+            return total + (Number(ingredient.displayWeight) || 0);
+        }
+        return total;
+    }, 0);
 }
 
-function calculateHydration(flourWeight, ingredients) {
-    const waterWeight = ingredients.filter(ingredient => ingredient.type === "Fluid").reduce((total, ingredient) => total + ingredient.weight, 0);
-    return (waterWeight / flourWeight) * 100;
+// Function to calculate total flour weight, including starter flour
+function calculateTotalFlourWeight(ingredients) {
+    if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        return 0;
+    }
+
+    return ingredients.reduce((total, ingredient) => {
+        if (ingredient.type === 'Flour') {
+            return total + (Number(ingredient.weight) || 0);
+        } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
+            return total + (Number(ingredient.displayWeight) || 0);
+        }
+        return total;
+    }, 0);
 }
+
+// Function to calculate hydration, including starter
+function calculateHydration(ingredients) {
+    const totalFlourWeight = calculateTotalFlourWeight(ingredients);
+    const totalWaterWeight = calculateTotalFluidWeight(ingredients);
+    return (totalWaterWeight / totalFlourWeight) * 100;
+}
+
 
 function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients) {
     // Toggle preferment section visibility
@@ -131,24 +189,44 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
 
     list.innerHTML = ''; // Clear the list
     ingredients.forEach(ingredient => {
-        const clone = document.importNode(template, true);
-        const percent = totalFlourWeight ? (ingredient.weight / totalFlourWeight) * 100 : 0;
-        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${ingredient.weight}`;
+        // Skip rendering starter ingredients in flour and fluid lists
+        if (ingredient.starter) {
+            return; // Skip this iteration if the ingredient is part of a starter
+        }
 
-        // Conditionally hide the weight wrapper if weight is not set or 0
-        if (ingredient.type === 'Extra' && (!ingredient.weight || ingredient.weight === 0)) {
-            clone.querySelector('[recipe="extras-weight-wrapper"]').classList.add('is-hidden');
-        } else if (ingredient.type !== 'Extra') {
-            // Only set percent if ingredient is not 'Extra', checking the ingredient's type
+        const clone = document.importNode(template, true);
+
+        // Set name
+        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
+
+        // Set weight, adjusting for starter ingredients if needed
+        const weight = ingredient.type === "Starter" && ingredient.displayWeight ? ingredient.displayWeight : ingredient.weight;
+        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight}`;
+
+        // Handling hydration percent visibility (if applicable to the list)
+        const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
+        if (hydrationPercentElement) {
+            const hydrationPercentWrapper = hydrationPercentElement.parentElement;
+            if (ingredient.hydration !== undefined) {
+                hydrationPercentElement.textContent = `${ingredient.hydration}%`;
+                hydrationPercentWrapper.classList.remove('is-hidden');
+            } else {
+                hydrationPercentWrapper.classList.add('is-hidden');
+            }
+        }
+
+        // Setting percent value for ingredients except 'Extra'
+        if (ingredient.type !== 'Extra') {
             const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
-            if (percentElement && ingredient.type !== 'Extra' && totalFlourWeight) {
+            if (percentElement) {
+                const flourWeightForCalculation = totalFlourWeight;
+                const percent = flourWeightForCalculation ? (weight / flourWeightForCalculation) * 100 : 0;
                 percentElement.textContent = `${percent.toFixed(1)}%`;
             }
         }
+
         list.appendChild(clone);
     });
-
 }
 
 // Main Update Function
@@ -165,151 +243,170 @@ function updatePageWithRecipeData(recipeData) {
     const unit = getUnit(recipeData.format);
     document.querySelectorAll('[recipe="format"]').forEach(element => element.textContent = unit);
 
-    // Update recipe steps
-    const stepsListElement = document.querySelector('ul[recipe="steps-list"]');
+    // Hide steps header if no steps in list
+    const stepsSection = document.getElementById('steps');
+    if (recipeData.steps && recipeData.steps.length < 1) {
+        // If there are no steps, hide the steps section
+        if (stepsSection) {
+            stepsSection.classList.add('is-hidden');
+        }
+    } else {
+        // If there are steps, make sure the section is visible
+        if (stepsSection) {
+            stepsSection.classList.remove('is-hidden');
+        }
+    
+        // Update recipe steps
+        const stepsListElement = document.querySelector('ul[recipe="steps-list"]');
 
-    if (stepsListElement && stepsListElement.children.length > 0) {
-        const templateElement = stepsListElement.children[0];
-        const templateHTML = templateElement.innerHTML;
-        const templateClass = templateElement.className;
-        renderStepsListItems(stepsListElement, recipeData.steps, templateHTML, templateClass);
+        if (stepsListElement && stepsListElement.children.length > 0) {
+            const templateElement = stepsListElement.children[0];
+            const templateHTML = templateElement.innerHTML;
+            const templateClass = templateElement.className;
+            renderStepsListItems(stepsListElement, recipeData.steps, templateHTML, templateClass);
+        }
     }
 
-    // Calculate and update weights and hydration
-    const doughIngredients = recipeData.ingredients.filter(ingredient => !ingredient.preferment && ingredient.type !== 'Extra');
-    const totalDoughIngredients = recipeData.ingredients.filter(ingredient => ingredient.type !== 'Extra');
-    const prefermentIngredients = recipeData.ingredients.filter(ingredient => ingredient.preferment);
-    const extraIngredients = recipeData.ingredients.filter(ingredient => ingredient.type === 'Extra');
+        // Calculate and update weights and hydration
+        const doughIngredients = recipeData.ingredients.filter(ingredient => !ingredient.preferment && ingredient.type !== 'Extra');
+        const totalDoughIngredients = recipeData.ingredients.filter(ingredient => ingredient.type !== 'Extra');
+        const prefermentIngredients = recipeData.ingredients.filter(ingredient => ingredient.preferment);
+        const extraIngredients = recipeData.ingredients.filter(ingredient => ingredient.type === 'Extra');
 
-    // Calculate dough stats
-    const totalDoughWeight = calculateTotalWeight(totalDoughIngredients);
-    const totalFlourWeight = calculateFlourWeight(totalDoughIngredients);
-    const hydration = calculateHydration(totalFlourWeight, totalDoughIngredients);
+        // Calculate dough stats
+        const totalDoughWeight = calculateTotalWeight(totalDoughIngredients);
+        const totalFlourWeight = calculateTotalFlourWeight(totalDoughIngredients);
+        const hydration = calculateHydration(totalFlourWeight, totalDoughIngredients);
 
-    // Calculate preferment stats
-    const totalPrefermentDoughWeight = calculateTotalWeight(prefermentIngredients);
-    const totalPrefermentFlourWeight = calculateFlourWeight(prefermentIngredients);
-    const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentIngredients);
+        // Calculate preferment stats
+        const totalPrefermentDoughWeight = calculateTotalWeight(prefermentIngredients);
+        const totalPrefermentFlourWeight = calculateTotalFlourWeight(prefermentIngredients);
+        const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentIngredients);
 
-    // Dough stats overview
-    document.querySelector('[recipe="dough-weight"]').textContent = `${totalDoughWeight}`;
-    document.querySelector('[recipe="flour-weight"]').textContent = `${totalFlourWeight}`;
-    document.querySelector('[recipe="hydration"]').textContent = `${hydration.toFixed(1)}%`;
+        // Dough stats overview
+        document.querySelector('[recipe="dough-weight"]').textContent = `${totalDoughWeight}`;
+        document.querySelector('[recipe="flour-weight"]').textContent = `${totalFlourWeight}`;
+        document.querySelector('[recipe="hydration"]').textContent = `${hydration.toFixed(1)}%`;
 
-    // Preferment stats overview
-    document.querySelectorAll('[recipe="preferment-weight"]').forEach((element) => {
-        element.textContent = `${totalPrefermentDoughWeight}`;
-    });
-    document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}`;
-    document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
+        // Preferment stats overview
+        document.querySelectorAll('[recipe="preferment-weight"]').forEach((element) => {
+            element.textContent = `${totalPrefermentDoughWeight}`;
+        });
+        document.querySelector('[recipe="preferment-flour-weight"]').textContent = `${totalPrefermentFlourWeight}`;
+        document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
 
-    // Update dough ingredients lists
-    updateIngredientsList('[recipe="dough-flour-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
-    updateIngredientsList('[recipe="dough-fluid-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
-    updateIngredientsList('[recipe="dough-basics-list"]', doughIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
-    updateIngredientsList('[recipe="dough-additions-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
+        // Update dough ingredients lists
+        updateIngredientsList('[recipe="dough-flour-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
+        updateIngredientsList('[recipe="dough-fluid-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
+        updateIngredientsList('[recipe="dough-basics-list"]', doughIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
+        updateIngredientsList('[recipe="dough-additions-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
 
-    // Update preferment ingredients lists
-    updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
-    updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
-    updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
-    updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
-
-
-    // Assuming totalPrefermentDoughWeight and totalFlourWeight are already calculated
-    const prefermentPercent = (totalPrefermentDoughWeight / totalFlourWeight) * 100;
-
-    // Update all elements with the recipe attribute preferment-percent
-    document.querySelectorAll('[recipe="preferment-percent"]').forEach((element) => {
-        element.textContent = `${prefermentPercent.toFixed(1)}%`;
-    });
-
-    // Update extra ingredients lists
-    updateIngredientsList('[recipe="extras-list"]', extraIngredients);
-
-    // Toggle visibility of preferment and extras sections based on their content
-    toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients);
-
-    // Update the page title with the recipe title and " | Made with Homebaker"
-    document.title = `${recipeData.title || "Recipe made with Homebaker"} | Made with Homebaker`;
-
-    hideLoader();
-}
-
-// Function to render the recipe steps list
-function renderStepsListItems(listElement, items, templateHTML, templateClass) {
-    // Clear the list before adding new items
-    listElement.innerHTML = '';
-
-    items.forEach((item, index) => {
-        const clone = document.createElement('li');
-        clone.innerHTML = templateHTML;
-        clone.className = templateClass;
-
-        // Update the clone with data
-        clone.querySelector('[recipe="step-title"]').textContent = `${index + 1}. ${item.title}`;
-        clone.querySelector('[recipe="step-description"]').textContent = item.notes;
-
-        // Conditionally update/hide step timer
-        const stepTimerElement = clone.querySelector('[recipe="step-timer"]');
-        if (item.timer_duration) {
-            stepTimerElement.textContent = item.timer_duration;
-        } else {
-            // Hide the parent element
-            const timerChipElement = clone.querySelector('[recipe="meta-timer-chip"]');
-            if (timerChipElement) {
-                timerChipElement.style.display = 'none';
-            }
-        }
-
-        // Conditionally update/hide dough temp
-        const doughTempElement = clone.querySelector('[recipe="dough-temp"]');
-        if (item.dough_temperature) {
-            doughTempElement.textContent = item.dough_temperature;
-        } else {
-            // Hide the parent element
-            const doughChipElement = clone.querySelector('[recipe="meta-dough-chip"]');
-            if (doughChipElement) {
-                doughChipElement.style.display = 'none';
-            }
-        }
-
-        // Conditionally update/hide oven temp
-        const ovenTempElement = clone.querySelector('[recipe="oven-temp"]');
-        if (item.oven_temperature) {
-            ovenTempElement.textContent = item.oven_temperature;
-        } else {
-            // Hide the parent element
-            const ovenChipElement = clone.querySelector('[recipe="meta-oven-chip"]');
-            if (ovenChipElement) {
-                ovenChipElement.style.display = 'none';
-            }
-        }
-
-        // Conditionally update/hide ambient temp
-        const ambientTempElement = clone.querySelector('[recipe="ambient-temp"]');
-        if (item.ambient_temperature) {
-            ambientTempElement.textContent = item.ambient_temperature;
-        } else {
-            // Hide the parent element
-            const ambientChipElement = clone.querySelector('[recipe="meta-ambient-chip"]');
-            if (ambientChipElement) {
-                ambientChipElement.style.display = 'none';
-            }
-        }
-
-        listElement.appendChild(clone);
-    });
-}
+        // Update preferment ingredients lists
+        updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
+        updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
+        updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
+        updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
 
 
+        // Assuming totalPrefermentDoughWeight and totalFlourWeight are already calculated
+        const prefermentPercent = (totalPrefermentDoughWeight / totalFlourWeight) * 100;
 
-async function main() {
-    const recipeId = new URLSearchParams(window.location.search).get('id');
-    const recipeData = await fetchRecipeData(recipeId);
-    if (recipeData) {
-        updatePageWithRecipeData(recipeData);
+        // Update all elements with the recipe attribute preferment-percent
+        document.querySelectorAll('[recipe="preferment-percent"]').forEach((element) => {
+            element.textContent = `${prefermentPercent.toFixed(1)}%`;
+        });
+
+        // Update extra ingredients lists
+        updateIngredientsList('[recipe="extras-list"]', extraIngredients);
+
+        // Toggle visibility of preferment and extras sections based on their content
+        toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredients);
+
+        // Update the page title with the recipe title and " | Made with Homebaker"
+        document.title = `${recipeData.title || "Recipe made with Homebaker"} | Made with Homebaker`;
+
+        hideLoader();
     }
-}
 
-main();
+
+    // Function to render the recipe steps list
+    function renderStepsListItems(listElement, items, templateHTML, templateClass) {
+        // Clear the list before adding new items
+        listElement.innerHTML = '';
+
+        items.forEach((item, index) => {
+            const clone = document.createElement('li');
+            clone.innerHTML = templateHTML;
+            clone.className = templateClass;
+
+            // Update the clone with data
+            clone.querySelector('[recipe="step-title"]').textContent = `${index + 1}. ${item.title}`;
+            clone.querySelector('[recipe="step-description"]').textContent = item.notes;
+
+            // Conditionally update/hide step timer
+            const stepTimerElement = clone.querySelector('[recipe="step-timer"]');
+            if (item.timer_duration) {
+                stepTimerElement.textContent = item.timer_duration;
+            } else {
+                // Hide the parent element
+                const timerChipElement = clone.querySelector('[recipe="meta-timer-chip"]');
+                if (timerChipElement) {
+                    timerChipElement.style.display = 'none';
+                }
+            }
+
+            // Conditionally update/hide dough temp
+            const doughTempElement = clone.querySelector('[recipe="dough-temp"]');
+            if (item.dough_temperature) {
+                doughTempElement.textContent = item.dough_temperature;
+            } else {
+                // Hide the parent element
+                const doughChipElement = clone.querySelector('[recipe="meta-dough-chip"]');
+                if (doughChipElement) {
+                    doughChipElement.style.display = 'none';
+                }
+            }
+
+            // Conditionally update/hide oven temp
+            const ovenTempElement = clone.querySelector('[recipe="oven-temp"]');
+            if (item.oven_temperature) {
+                ovenTempElement.textContent = item.oven_temperature;
+            } else {
+                // Hide the parent element
+                const ovenChipElement = clone.querySelector('[recipe="meta-oven-chip"]');
+                if (ovenChipElement) {
+                    ovenChipElement.style.display = 'none';
+                }
+            }
+
+            // Conditionally update/hide ambient temp
+            const ambientTempElement = clone.querySelector('[recipe="ambient-temp"]');
+            if (item.ambient_temperature) {
+                ambientTempElement.textContent = item.ambient_temperature;
+            } else {
+                // Hide the parent element
+                const ambientChipElement = clone.querySelector('[recipe="meta-ambient-chip"]');
+                if (ambientChipElement) {
+                    ambientChipElement.style.display = 'none';
+                }
+            }
+
+            listElement.appendChild(clone);
+        });
+    }
+
+
+    async function main() {
+        const recipeId = new URLSearchParams(window.location.search).get('id');
+        const recipeData = await fetchRecipeData(recipeId);
+        if (recipeData) {
+            console.log(recipeData.ingredients);
+            updatePageWithRecipeData(recipeData);
+        }
+
+        // Attach event listener to toggle
+        document.getElementById('starterToggle').addEventListener('change', toggleIncludeStarterFlour);
+
+    }
+
+    main();
