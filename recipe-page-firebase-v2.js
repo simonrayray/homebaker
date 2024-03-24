@@ -37,7 +37,7 @@ export async function fetchRecipeData(recipeId) {
 }
 
 // Global toggle state for including starter in calculations
-let includeStarterFlour = false;
+let includeStarterInCalculations = false;
 
 // Function to handle checkbox state change
 function handleStarterToggleChange() {
@@ -125,16 +125,6 @@ function calculateTotalFlourWeight(ingredients) {
             return total + (Number(ingredient.weight) || 0);
         } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
             return total + (Number(ingredient.displayWeight) || 0);
-        }
-        return total;
-    }, 0);
-}
-
-function calculateBakersPercentageFlourWeight(ingredients) {
-    // Only include ingredients where starter=true if includeStarterFlour is true
-    return ingredients.reduce((total, ingredient) => {
-        if (ingredient.type === 'Flour' || (includeStarterFlour && ingredient.starter)) {
-            return total + (ingredient.weight || 0);
         }
         return total;
     }, 0);
@@ -432,7 +422,7 @@ function updatePageWithRecipeData(recipeData) {
         }
 
         // Attach event listener to toggle
-        document.getElementById('starterToggle').addEventListener('change', toggleIncludeStarterFlour);
+        document.getElementById('starterToggle').addEventListener('change', handleStarterToggleChange);
 
     }
 
