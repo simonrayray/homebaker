@@ -189,68 +189,72 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
 // Update Ingredients List
 function updateIngredientsList(selector, ingredients, totalDoughIngredients) {
     const list = document.querySelector(selector);
-    const template = list.children[0].cloneNode(true); // Clone the template
-    list.innerHTML = ''; // Clear the list
-    // Hide the list wrapper if no ingredients of these types
+    
+    // Filter out ingredients where starter = true
+    const relevantIngredients = ingredients.filter(ingredient => !ingredient.starter);
+
+    // Hide the list wrapper if no relevant ingredients are present
     const listWrapper = list.parentElement;
-    if (ingredients.length === 0) {
-        listWrapper.style.display = 'none';
-        return;
+    if (relevantIngredients.length === 0) {
+        listWrapper.style.display = 'none'; // Use 'none' to hide
     } else {
-        listWrapper.style.display = '';
+        listWrapper.style.display = ''; // Use '' to use the default display style
     }
-
-    list.innerHTML = ''; // Clear the list
-    ingredients.forEach(ingredient => {
-        // Skip rendering starter ingredients in flour and fluid lists
-        if (ingredient.starter) {
-            return; // Skip this iteration if the ingredient is part of a starter
-        }
-
-        const clone = document.importNode(template, true);
-
-        // Set name
-        clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
-
-        // Set weight, adjusting for starter ingredients if needed
-        const weight = ingredient.type === "Starter" && ingredient.displayWeight ? ingredient.displayWeight : ingredient.weight;
-        clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight}`;
-
-        // Handling hydration percent visibility (if applicable to the list)
-        const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
-        if (hydrationPercentElement) {
-            const hydrationPercentWrapper = hydrationPercentElement.parentElement;
-            if (ingredient.hydration !== undefined) {
-                hydrationPercentElement.textContent = `${ingredient.hydration}%`;
-                hydrationPercentWrapper.classList.remove('is-hidden');
-            } else {
-                hydrationPercentWrapper.classList.add('is-hidden');
+    // Proceed only if there are relevant ingredients
+    if (relevantIngredients.length > 0) {
+        const template = list.children[0].cloneNode(true); // Clone the template
+        list.innerHTML = ''; // Clear the list
+        relevantIngredients.forEach(ingredient => {
+            // Skip rendering starter ingredients in flour and fluid lists
+            if (ingredient.starter) {
+                return; // Skip this iteration if the ingredient is part of a starter
             }
-        }
 
-        // Setting percent value for ingredients except 'Extra'
-        if (ingredient.type !== 'Extra') {
-            const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
-            if (percentElement) {
-                // Calculate the total flour weight based on checkbox state
-                let flourWeightForCalculation;
-                if (includeStarterInCalculations) {
-                    // If including starter, use the total flour weight that includes starter flour
-                    flourWeightForCalculation = calculateTotalFlourWeight(totalDoughIngredients);
+            const clone = document.importNode(template, true);
+
+            // Set name
+            clone.querySelector('[recipe="ingredient-name"]').textContent = ingredient.name;
+
+            // Set weight, adjusting for starter ingredients if needed
+            const weight = ingredient.type === "Starter" && ingredient.displayWeight ? ingredient.displayWeight : ingredient.weight;
+            clone.querySelector('[recipe="ingredient-weight"]').textContent = `${weight}`;
+
+            // Handling hydration percent visibility (if applicable to the list)
+            const hydrationPercentElement = clone.querySelector('[recipe="hydration-percent"]');
+            if (hydrationPercentElement) {
+                const hydrationPercentWrapper = hydrationPercentElement.parentElement;
+                if (ingredient.hydration !== undefined) {
+                    hydrationPercentElement.textContent = `${ingredient.hydration}%`;
+                    hydrationPercentWrapper.classList.remove('is-hidden');
                 } else {
-                    // If excluding starter, use a modified total that excludes starter flour
-                    flourWeightForCalculation = totalDoughIngredients.filter(i => !i.starter || i.type !== 'Starter').reduce((total, i) => total + (i.weight || 0), 0);
+                    hydrationPercentWrapper.classList.add('is-hidden');
                 }
-
-                // Calculate and set the percentage
-                const weight = ingredient.displayWeight || ingredient.weight;
-                const percent = (weight / flourWeightForCalculation) * 100;
-                percentElement.textContent = `${percent.toFixed(1)}%`;
             }
-        }
 
-        list.appendChild(clone);
-    });
+            // Setting percent value for ingredients except 'Extra'
+            if (ingredient.type !== 'Extra') {
+                const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
+                if (percentElement) {
+                    // Calculate the total flour weight based on checkbox state
+                    let flourWeightForCalculation;
+                    if (includeStarterInCalculations) {
+                        // If including starter, use the total flour weight that includes starter flour
+                        flourWeightForCalculation = calculateTotalFlourWeight(totalDoughIngredients);
+                    } else {
+                        // If excluding starter, use a modified total that excludes starter flour
+                        flourWeightForCalculation = totalDoughIngredients.filter(i => !i.starter || i.type !== 'Starter').reduce((total, i) => total + (i.weight || 0), 0);
+                    }
+
+                    // Calculate and set the percentage
+                    const weight = ingredient.displayWeight || ingredient.weight;
+                    const percent = (weight / flourWeightForCalculation) * 100;
+                    percentElement.textContent = `${percent.toFixed(1)}%`;
+                }
+            }
+
+            list.appendChild(clone);
+        });
+    }
 }
 
 // Main Update Function
