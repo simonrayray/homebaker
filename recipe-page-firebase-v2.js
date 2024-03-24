@@ -181,7 +181,7 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
 
 
 // Update Ingredients List
-function updateIngredientsList(selector, ingredients, totalFlourWeight) {
+function updateIngredientsList(selector, ingredients, totalDoughIngredients) {
     const list = document.querySelector(selector);
     const template = list.children[0].cloneNode(true); // Clone the template
     list.innerHTML = ''; // Clear the list
@@ -227,8 +227,19 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
         if (ingredient.type !== 'Extra') {
             const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
             if (percentElement) {
-                const flourWeightForCalculation = totalFlourWeight;
-                const percent = flourWeightForCalculation ? (weight / flourWeightForCalculation) * 100 : 0;
+                // Calculate the total flour weight based on checkbox state
+                let flourWeightForCalculation;
+                if (includeStarterInCalculations) {
+                    // If including starter, use the total flour weight that includes starter flour
+                    flourWeightForCalculation = calculateTotalFlourWeight(totalDoughIngredients);
+                } else {
+                    // If excluding starter, use a modified total that excludes starter flour
+                    flourWeightForCalculation = totalDoughIngredients.filter(i => !i.starter || i.type !== 'Starter').reduce((total, i) => total + (i.weight || 0), 0);
+                }
+
+                // Calculate and set the percentage
+                const weight = ingredient.displayWeight || ingredient.weight;
+                const percent = (weight / flourWeightForCalculation) * 100;
                 percentElement.textContent = `${percent.toFixed(1)}%`;
             }
         }
