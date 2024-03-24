@@ -280,8 +280,8 @@ function updatePageWithRecipeData(recipeData) {
         const totalPrefermentFlourWeight = calculateTotalFlourWeight(prefermentIngredients);
 
         // Calculate hydration for dough
-        const doughFlourWeight = calculateTotalFlourWeight(doughIngredients);
-        const doughWaterWeight = calculateTotalFluidWeight(doughIngredients);
+        const doughFlourWeight = calculateTotalFlourWeight(totalDoughIngredients);
+        const doughWaterWeight = calculateTotalFluidWeight(totalDoughIngredients);
         const doughHydration = calculateHydration(doughFlourWeight, doughWaterWeight);
 
         // Calculate hydration for preferment
