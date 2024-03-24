@@ -132,7 +132,6 @@ function calculateTotalFlourWeight(ingredients) {
 
 function calculateBakersPercentageFlourWeight(ingredients) {
     // Only include ingredients where starter=true if includeStarterFlour is true
-    console.log("Ingredients before reduce:", ingredients);
     return ingredients.reduce((total, ingredient) => {
         if (ingredient.type === 'Flour' || (includeStarterFlour && ingredient.starter)) {
             return total + (ingredient.weight || 0);
@@ -182,7 +181,7 @@ function toggleIngredientSectionsVisibility(prefermentIngredients, extraIngredie
 
 
 // Update Ingredients List
-function updateIngredientsList(selector, ingredients, totalDoughIngredients) {
+function updateIngredientsList(selector, ingredients, totalFlourWeight) {
     const list = document.querySelector(selector);
     const template = list.children[0].cloneNode(true); // Clone the template
     list.innerHTML = ''; // Clear the list
@@ -227,9 +226,8 @@ function updateIngredientsList(selector, ingredients, totalDoughIngredients) {
         // Setting percent value for ingredients except 'Extra'
         if (ingredient.type !== 'Extra') {
             const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
-            const bakersPercentageFlourWeight = calculateBakersPercentageFlourWeight(totalDoughIngredients);
             if (percentElement) {
-                const flourWeightForCalculation = bakersPercentageFlourWeight;
+                const flourWeightForCalculation = totalFlourWeight;
                 const percent = flourWeightForCalculation ? (weight / flourWeightForCalculation) * 100 : 0;
                 percentElement.textContent = `${percent.toFixed(1)}%`;
             }
