@@ -46,11 +46,20 @@ function handleStarterToggleChange() {
 }
 
 function updateCalculations() {
-    // Assume you have a function to fetch or refresh your recipe data
     const recipeId = new URLSearchParams(window.location.search).get('id');
-    const recipeData = fetchRecipeData(recipeId);
-    updatePageWithRecipeData(recipeData);
+    fetchRecipeData(recipeId).then(recipeData => {
+        if (recipeData) {
+            updatePageWithRecipeData(recipeData);
+        } else {
+            // Handle the case where no recipe data is returned
+            console.error("Failed to fetch recipe data.");
+        }
+    }).catch(error => {
+        // Handle any errors that occur during fetch
+        console.error("Error fetching recipe data:", error);
+    });
 }
+
 
 // Utility Functions
 function hideLoader() {
