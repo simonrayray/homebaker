@@ -42,6 +42,12 @@ let includeStarterInCalculations = false;
 // Function to handle checkbox state change
 function handleStarterToggleChange() {
     includeStarterInCalculations = document.getElementById('starterToggle').checked;
+    updateCalculations();
+}
+
+function updateCalculations() {
+    // Assume you have a function to fetch or refresh your recipe data
+    const recipeData = fetchRecipeData(recipeId);
     updatePageWithRecipeData(recipeData);
 }
 
