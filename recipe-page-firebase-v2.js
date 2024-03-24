@@ -130,11 +130,9 @@ function calculateTotalFlourWeight(ingredients) {
     }, 0);
 }
 
-// Function to calculate hydration, including starter
-function calculateHydration(ingredients) {
-    const totalFlourWeight = calculateTotalFlourWeight(ingredients);
-    const totalWaterWeight = calculateTotalFluidWeight(ingredients);
-    return (totalWaterWeight / totalFlourWeight) * 100;
+// Function to calculate hydration
+function calculateHydration(flourWeight, waterWeight) {
+    return flourWeight > 0 ? (waterWeight / flourWeight) * 100 : 0;
 }
 
 
@@ -276,17 +274,25 @@ function updatePageWithRecipeData(recipeData) {
         // Calculate dough stats
         const totalDoughWeight = calculateTotalWeight(totalDoughIngredients);
         const totalFlourWeight = calculateTotalFlourWeight(totalDoughIngredients);
-        const hydration = calculateHydration(totalFlourWeight, totalDoughIngredients);
 
         // Calculate preferment stats
         const totalPrefermentDoughWeight = calculateTotalWeight(prefermentIngredients);
         const totalPrefermentFlourWeight = calculateTotalFlourWeight(prefermentIngredients);
-        const prefermentHydration = calculateHydration(totalPrefermentFlourWeight, prefermentIngredients);
+
+        // Calculate hydration for dough
+        const doughFlourWeight = calculateTotalFlourWeight(doughIngredients);
+        const doughWaterWeight = calculateTotalFluidWeight(doughIngredients);
+        const doughHydration = calculateHydration(doughFlourWeight, doughWaterWeight);
+
+        // Calculate hydration for preferment
+        const prefermentFlourWeight = calculateTotalFlourWeight(prefermentIngredients);
+        const prefermentWaterWeight = calculateTotalFluidWeight(prefermentIngredients);
+        const prefermentHydration = calculateHydration(prefermentFlourWeight, prefermentWaterWeight);
 
         // Dough stats overview
         document.querySelector('[recipe="dough-weight"]').textContent = `${totalDoughWeight}`;
         document.querySelector('[recipe="flour-weight"]').textContent = `${totalFlourWeight}`;
-        document.querySelector('[recipe="hydration"]').textContent = `${hydration.toFixed(1)}%`;
+        document.querySelector('[recipe="hydration"]').textContent = `${doughHydration.toFixed(1)}%`;
 
         // Preferment stats overview
         document.querySelectorAll('[recipe="preferment-weight"]').forEach((element) => {
