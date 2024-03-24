@@ -175,7 +175,7 @@ function updateIngredientsList(selector, ingredients, totalDoughIngredients) {
     const list = document.querySelector(selector);
     const template = list.children[0].cloneNode(true); // Clone the template
     list.innerHTML = ''; // Clear the list
-
+    console.log(totalDoughIngredients)
     // Hide the list wrapper if no ingredients of these types
     const listWrapper = list.parentElement;
     if (ingredients.length === 0) {
