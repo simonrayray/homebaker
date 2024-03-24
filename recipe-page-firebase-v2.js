@@ -175,7 +175,6 @@ function updateIngredientsList(selector, ingredients, totalDoughIngredients) {
     const list = document.querySelector(selector);
     const template = list.children[0].cloneNode(true); // Clone the template
     list.innerHTML = ''; // Clear the list
-    console.log(totalDoughIngredients)
     // Hide the list wrapper if no ingredients of these types
     const listWrapper = list.parentElement;
     if (ingredients.length === 0) {
@@ -313,16 +312,16 @@ function updatePageWithRecipeData(recipeData) {
         document.querySelector('[recipe="preferment-hydration"]').textContent = `${prefermentHydration.toFixed(1)}%`;
 
         // Update dough ingredients lists
-        updateIngredientsList('[recipe="dough-flour-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
-        updateIngredientsList('[recipe="dough-fluid-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
-        updateIngredientsList('[recipe="dough-basics-list"]', doughIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
-        updateIngredientsList('[recipe="dough-additions-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
+        updateIngredientsList('[recipe="dough-flour-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Flour'), totalDoughIngredientst);
+        updateIngredientsList('[recipe="dough-fluid-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalDoughIngredients);
+        updateIngredientsList('[recipe="dough-basics-list"]', doughIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalDoughIngredients);
+        updateIngredientsList('[recipe="dough-additions-list"]', doughIngredients.filter(ingredient => ingredient.type === 'Addition'), totalDoughIngredients);
 
         // Update preferment ingredients lists
-        updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'), totalFlourWeight);
-        updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalFlourWeight);
-        updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalFlourWeight);
-        updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'), totalFlourWeight);
+        updateIngredientsList('[recipe="preferment-flour-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Flour'), totalDoughIngredients);
+        updateIngredientsList('[recipe="preferment-fluid-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Fluid'), totalDoughIngredients);
+        updateIngredientsList('[recipe="preferment-basics-list"]', prefermentIngredients.filter(ingredient => ['Starter', 'Salt', 'Yeast'].includes(ingredient.type)), totalDoughIngredients);
+        updateIngredientsList('[recipe="preferment-additions-list"]', prefermentIngredients.filter(ingredient => ingredient.type === 'Addition'), totalDoughIngredients);
 
 
         // Assuming totalPrefermentDoughWeight and totalFlourWeight are already calculated
@@ -417,7 +416,6 @@ function updatePageWithRecipeData(recipeData) {
         const recipeId = new URLSearchParams(window.location.search).get('id');
         const recipeData = await fetchRecipeData(recipeId);
         if (recipeData) {
-            console.log(recipeData.ingredients);
             updatePageWithRecipeData(recipeData);
         }
 
