@@ -39,9 +39,9 @@ export async function fetchRecipeData(recipeId) {
 // Global toggle state for including starter in calculations
 let includeStarterFlour = false;
 
-// Function to toggle the inclusion of starter flour in calculations
-function toggleIncludeStarterFlour() {
-    includeStarterFlour = !includeStarterFlour;
+// Function to handle checkbox state change
+function handleStarterToggleChange() {
+    includeStarterInCalculations = document.getElementById('starterToggle').checked;
     updatePageWithRecipeData(recipeData);
 }
 
@@ -125,6 +125,16 @@ function calculateTotalFlourWeight(ingredients) {
             return total + (Number(ingredient.weight) || 0);
         } else if (ingredient.starter && ingredient.type === 'Starter' && ingredient.hydration === undefined) {
             return total + (Number(ingredient.displayWeight) || 0);
+        }
+        return total;
+    }, 0);
+}
+
+function calculateBakersPercentageFlourWeight(ingredients) {
+    // Only include ingredients where starter=true if includeStarterFlour is true
+    return ingredients.reduce((total, ingredient) => {
+        if (ingredient.type === 'Flour' || (includeStarterFlour && ingredient.starter)) {
+            return total + (ingredient.weight || 0);
         }
         return total;
     }, 0);
@@ -216,8 +226,9 @@ function updateIngredientsList(selector, ingredients, totalFlourWeight) {
         // Setting percent value for ingredients except 'Extra'
         if (ingredient.type !== 'Extra') {
             const percentElement = clone.querySelector('[recipe="ingredient-percent"]');
+            const bakersPercentageFlourWeight = calculateBakersPercentageFlourWeight(totalDoughIngredients);
             if (percentElement) {
-                const flourWeightForCalculation = totalFlourWeight;
+                const flourWeightForCalculation = bakersPercentageFlourWeight;
                 const percent = flourWeightForCalculation ? (weight / flourWeightForCalculation) * 100 : 0;
                 percentElement.textContent = `${percent.toFixed(1)}%`;
             }
