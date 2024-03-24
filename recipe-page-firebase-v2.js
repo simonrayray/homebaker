@@ -37,7 +37,7 @@ export async function fetchRecipeData(recipeId) {
 }
 
 // Global toggle state for including starter in calculations
-let includeStarterInCalculations = false;
+let includeStarterInCalculations = true;
 
 // Function to handle checkbox state change
 function handleStarterToggleChange() {
