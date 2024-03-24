@@ -47,6 +47,7 @@ function handleStarterToggleChange() {
 
 function updateCalculations() {
     // Assume you have a function to fetch or refresh your recipe data
+    const recipeId = new URLSearchParams(window.location.search).get('id');
     const recipeData = fetchRecipeData(recipeId);
     updatePageWithRecipeData(recipeData);
 }
