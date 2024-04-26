@@ -97,6 +97,27 @@ function formatDate(firestoreTimestamp) {
     return dateObject.toLocaleDateString('en-US', options);
 }
 
+function formatDuration(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    let result = '';
+
+    // Append hours if non-zero
+    if (hours > 0) {
+        result += `${hours}h`;
+    }
+    // Append minutes if non-zero
+    if (remainingMinutes > 0) {
+        // Add a space if there are hours before minutes
+        if (result.length > 0) {
+            result += ' ';
+        }
+        result += `${remainingMinutes}m`;
+    }
+    return result;
+}
+
+
 function calculateTotalWeight(ingredients) {
     // Ensure ingredients is an array and not undefined or null
     if (!Array.isArray(ingredients) || ingredients.length === 0) {
@@ -382,7 +403,8 @@ function updatePageWithRecipeData(recipeData) {
             // Conditionally update/hide step timer
             const stepTimerElement = clone.querySelector('[recipe="step-timer"]');
             if (item.timer_duration) {
-                stepTimerElement.textContent = item.timer_duration;
+                // Format the duration from minutes to either "Xh", "Ym", or "Xh Ym"
+                stepTimerElement.textContent = formatDuration(item.timer_duration);
             } else {
                 // Hide the parent element
                 const timerChipElement = clone.querySelector('[recipe="meta-timer-chip"]');
