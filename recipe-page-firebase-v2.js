@@ -39,6 +39,28 @@ export async function fetchRecipeData(recipeId) {
 // Global toggle state for including starter in calculations
 let includeStarterInCalculations = true;
 
+// Function for appending recipe ID to open app button
+function updateOpenAppButton() {
+    const appButton = document.getElementById("deep-link-app");
+
+    // Get the current page URL
+    const currentPageUrl = window.location.href;
+    
+    // Create a URL object from the current URL
+    const url = new URL(currentPageUrl);
+    
+    // Extract the 'id' parameter from the URL
+    const recipeId = url.searchParams.get("id");
+    
+    if (recipeId) {
+        // Update the button's href attribute with the new URL
+        const appUrl = `homebaker://oven.homebaker.app/recipes/${recipeId}`;
+        appButton.href = appUrl;
+    } else {
+        console.error('Recipe ID not found in URL');
+    }
+}
+
 // Function to handle checkbox state change
 function handleStarterToggleChange() {
     includeStarterInCalculations = document.getElementById('starterToggle').checked;
@@ -381,6 +403,9 @@ function updatePageWithRecipeData(recipeData) {
 
         // Update the page title with the recipe title and " | Made with Homebaker"
         document.title = `${recipeData.title || "Recipe made with Homebaker"} | Made with Homebaker`;
+
+        // Update "Open in Homebaker" button href
+        updateOpenAppButton();
 
         hideLoader();
     }
